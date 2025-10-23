@@ -1,0 +1,16 @@
+@import url("./tokens-shim.css?v=3");
+
+/* cards.css (theme-aware) */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow: var(--shadow);
+}
+.card__header{padding:1rem 1rem 0;font-weight:600}
+.card__body{padding:1rem;color:var(--text)}
+.card__footer{padding:0 1rem 1rem}
+
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border:1px solid var(--border);padding:.625rem .75rem}
+.table th{background:var(--surface-2);text-align:left;font-weight:700}

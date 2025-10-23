@@ -1,0 +1,11 @@
+@import url("./tokens-shim.css?v=3");
+
+/* utilities.css (theme-aware) */
+.container{max-width:72rem;margin-inline:auto;padding-inline:1rem}
+.flex{display:flex}.grid{display:grid}
+.items-center{align-items:center}.justify-between{justify-content:space-between}
+.g-2{gap:.5rem}.g-4{gap:1rem}.g-6{gap:1.5rem}
+.mt-4{margin-top:1rem}.mb-4{margin-bottom:1rem}
+.p-2{padding:.5rem}.p-4{padding:1rem}.p-6{padding:1.5rem}
+.text-muted{color:var(--text-muted)}.w-full{width:100%}.text-center{text-align:center}
+.hide{display:none!important}

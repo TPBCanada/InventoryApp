@@ -1,0 +1,16 @@
+/* tokens.css (now delegates to site.css tokens) */
+/* This file intentionally minimal: keeps legacy imports working.
+   The actual tokens live in site.css. */
+   
+@import url("./style.css?v=3");
+@import url("./tokens-shim.css?v=3");
+
+:root{
+  /* Provide legacy aliases in case any page loads tokens.css alone */
+  --c-text: var(--text, #1f2937);
+  --c-muted: var(--text-muted, #6b7280);
+  --c-bg: var(--surface, #ffffff);
+  --c-border: var(--border, #e5e7eb);
+  --c-primary: var(--brand, #0dcaf0);
+  --c-primary-600: var(--brand-600, #0bb8de);
+}

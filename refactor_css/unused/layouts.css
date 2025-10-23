@@ -1,0 +1,7 @@
+/* layouts.css (theme-aware) */
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+@media (max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border)}
+.footer{background:var(--surface);border-top:1px solid var(--border)}
