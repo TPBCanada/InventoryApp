@@ -1,5 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home2/xserqhmy/public_html/dev/repository/
-    - /bin/cp -R * $DEPLOYPATH

@@ -1,2 +1,0 @@
-# wpInventoryApp
-PHP code 
