@@ -7,9 +7,15 @@ session_start();
 require_once __DIR__ . '/dbinv.php';
 
 if (!isset($_SESSION['username'])) {
-  header('Location: login.php');
-  exit;
+    header("Location: login.php");
+    exit;
 }
+
+$username = $_SESSION['username'];
+$user_id  = $_SESSION['user_id'];
+$role_id  = $_SESSION['role_id'] ?? 0;
+
+if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 try { $conn->set_charset('utf8mb4'); } catch (\Throwable $_) {}

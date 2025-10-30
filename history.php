@@ -1,5 +1,5 @@
 <?php
-// dev/history.php — Movement ledger (location-buttons only; no SKU/date filters)
+// dev/history.php — Movement ledger (location-select dropdowns)
 declare(strict_types=1);
 
 session_start();
@@ -11,6 +11,9 @@ if (!isset($_SESSION['username'])) {
   exit;
 }
 
+$username = $_SESSION['username'];
+$user_id  = $_SESSION['user_id'];
+
 date_default_timezone_set('America/Toronto');
 $title = 'Movement Ledger';
 
@@ -21,10 +24,15 @@ function qs_with(array $extra): string {
     if ($v === null) unset($base[$k]);
     else $base[$k] = $v;
   }
+  // Ensure 'page' is removed if we are just changing filters, so it defaults to 1
+  if (!isset($extra['page'])) {
+      unset($base['page']);
+  }
   return http_build_query($base);
 }
 
 // ---------- inputs (location only) ----------
+// Changed input names to match the select dropdowns in the new UI
 $row_code    = trim($_GET['row_code'] ?? '');
 $bay_num     = trim($_GET['bay_num'] ?? '');
 $level_code  = trim($_GET['level_code'] ?? '');
@@ -39,8 +47,13 @@ $rows        = [];
 $total_rows  = 0;
 $used_window = false;
 
-// ---------- load locations for location-buttons.js ----------
-$locations = [];
+// ---------- load locations for location-select dropdowns (REPLACED) ----------
+// Build nested data structure for dynamic dropdowns
+$rows_list = []; // Renamed to avoid collision with $rows (results)
+$baysByRow = [];
+$levelsByRow = [];
+$sidesByRow = [];
+
 try {
   $q = "
     SELECT row_code, bay_num, level_code, side
@@ -49,17 +62,32 @@ try {
   ";
   if ($res = $conn->query($q)) {
     while ($r = $res->fetch_assoc()) {
-      $locations[] = [
-        'row_code'   => (string)$r['row_code'],
-        'bay_num'    => (string)$r['bay_num'],
-        'level_code' => (string)$r['level_code'],
-        'side'       => (string)$r['side'],
-      ];
+      $row = $r['row_code'];
+      $bay = $r['bay_num'];
+      $lvl = $r['level_code'];
+      $side = $r['side'];
+
+      if (!in_array($row, $rows_list, true))
+        $rows_list[] = $row;
+      
+      $baysByRow[$row] = $baysByRow[$row] ?? [];
+      $levelsByRow[$row] = $levelsByRow[$row] ?? [];
+      $levelsByRow[$row][$bay] = $levelsByRow[$row][$bay] ?? [];
+      $sidesByRow[$row] = $sidesByRow[$row] ?? [];
+      $sidesByRow[$row][$bay] = $sidesByRow[$row][$bay] ?? [];
+      $sidesByRow[$row][$bay][$lvl] = $sidesByRow[$row][$bay][$lvl] ?? [];
+
+      if (!in_array($bay, $baysByRow[$row], true))
+        $baysByRow[$row][] = $bay;
+      if (!in_array($lvl, $levelsByRow[$row][$bay], true))
+        $levelsByRow[$row][$bay][] = $lvl;
+      if (!in_array($side, $sidesByRow[$row][$bay][$lvl], true))
+        $sidesByRow[$row][$bay][$lvl][] = $side;
     }
     $res->free();
   }
 } catch (\Throwable $_) {
-  // non-fatal; UI can still show the page
+  // non-fatal
 }
 
 // ---------- WHERE + params (location only) ----------
@@ -67,12 +95,14 @@ $where  = [];
 $params = [];
 $types  = '';
 
-if ($row_code !== '')   { $where[] = 'l.row_code   = ?'; $params[] = $row_code;   $types .= 's'; }
-if ($bay_num !== '')    { $where[] = 'l.bay_num    = ?'; $params[] = $bay_num;    $types .= 's'; }
+if ($row_code !== '')    { $where[] = 'l.row_code    = ?'; $params[] = $row_code;    $types .= 's'; }
+if ($bay_num !== '')     { $where[] = 'l.bay_num     = ?'; $params[] = $bay_num;     $types .= 's'; }
 if ($level_code !== '') { $where[] = 'l.level_code = ?'; $params[] = $level_code; $types .= 's'; }
-if ($side !== '')       { $where[] = 'l.side       = ?'; $params[] = $side;       $types .= 's'; }
+if ($side !== '')        { $where[] = 'l.side        = ?'; $params[] = $side;        $types .= 's'; }
 
 $where_sql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+// --- Queries for Movements (unchanged from original) ---
 
 // ---------- try MySQL 8 window function (running balance per (sku_id, loc_id)) ----------
 $sql_win = "
@@ -87,17 +117,17 @@ $sql_win = "
       im.sku_id,
       im.loc_id AS loc_id,  -- single name to avoid dupes
       s.sku_num AS sku,
-      s.`desc`   AS sku_desc,
+      s.`desc`    AS sku_desc,
       l.row_code, l.bay_num, l.level_code, l.side,
       CONCAT(l.row_code,'-',l.bay_num,'-',l.level_code,'-',l.side) AS location_code,
       CASE
-        WHEN im.movement_type = 'IN'         THEN  im.quantity_change
-        WHEN im.movement_type = 'OUT'        THEN -im.quantity_change
+        WHEN im.movement_type = 'IN'      THEN  im.quantity_change
+        WHEN im.movement_type = 'OUT'     THEN -im.quantity_change
         WHEN im.movement_type = 'ADJUSTMENT' THEN  im.quantity_change
         ELSE 0
       END AS delta
     FROM inventory_movements im
-    INNER JOIN sku      s ON s.id = im.sku_id
+    INNER JOIN sku       s ON s.id = im.sku_id
     INNER JOIN location l ON l.id = im.loc_id
     $where_sql
   )
@@ -120,8 +150,8 @@ $sql_win = "
 $ok = false;
 if ($stmt = $conn->prepare($sql_win)) {
   $used_window = true;
-  $types_win   = $types . 'ii';
-  $params_win  = $params;
+  $types_win    = $types . 'ii';
+  $params_win    = $params;
   $params_win[] = $limit;
   $params_win[] = $offset;
   $stmt->bind_param($types_win, ...$params_win);
@@ -149,19 +179,19 @@ if (!$ok) {
       im.id,
       im.created_at,
       s.sku_num AS sku,
-      s.`desc`   AS sku_desc,
+      s.`desc`    AS sku_desc,
       CONCAT(l.row_code,'-',l.bay_num,'-',l.level_code,'-',l.side) AS location_code,
       im.movement_type,
       CASE
-        WHEN im.movement_type = 'IN'         THEN  im.quantity_change
-        WHEN im.movement_type = 'OUT'        THEN -im.quantity_change
+        WHEN im.movement_type = 'IN'      THEN  im.quantity_change
+        WHEN im.movement_type = 'OUT'     THEN -im.quantity_change
         WHEN im.movement_type = 'ADJUSTMENT' THEN  im.quantity_change
         ELSE 0
       END AS signed_delta,
       im.reference,
       CAST(im.user_id AS CHAR) AS user_name
     FROM inventory_movements im
-    INNER JOIN sku      s ON s.id = im.sku_id
+    INNER JOIN sku       s ON s.id = im.sku_id
     INNER JOIN location l ON l.id = im.loc_id
     $where_sql
     ORDER BY im.created_at DESC, im.id DESC
@@ -196,7 +226,7 @@ if (!$ok) {
 $count_sql = "
   SELECT COUNT(*) AS c
   FROM inventory_movements im
-  INNER JOIN sku      s ON s.id = im.sku_id
+  INNER JOIN sku       s ON s.id = im.sku_id
   INNER JOIN location l ON l.id = im.loc_id
   $where_sql
 ";
@@ -210,44 +240,50 @@ if ($c = $conn->prepare($count_sql)) {
 
 $pages = max(1, (int)ceil($total_rows / $limit));
 
-// ---------- view ----------
+// ---------- view (MODIFIED LOCATION UI) ----------
 ob_start();
 ?>
 <h2 class="title">Movement Ledger</h2>
 
 <div class="card card--pad">
   <form class="form" method="get" action="">
-  <!-- LOCATION SELECTOR ON TOP -->
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
     <div style="flex-basis:100%;">
-      <label class="label">Location</label>
-      <div id="locBtnWrap" class="card" style="padding:8px">
-        <div id="locSelected" style="margin-bottom:6px; font-size:14px; opacity:.8">
-          <?php
-            $selCode = ($row_code && $bay_num && $level_code && $side)
-              ? ($row_code.'-'.$bay_num.'-'.$level_code.'-'.$side)
-              : '— none —';
-          ?>
-          Selected: <b id="locCodeText"><?= htmlspecialchars($selCode) ?></b>
-          <button type="button" id="locClearBtn" class="btn btn--ghost" style="margin-left:8px; padding:2px 8px">Clear</button>
+      <label class="label">Filter by Location</label>
+      <div class="grid grid-4" style="margin-top:4px;">
+        <div>
+          <label for="row_code_select" class="label">Row</label>
+          <select id="row_code_select" name="row_code" class="input">
+            <option value="">— Any —</option>
+            <?php foreach ($rows_list as $r): ?>
+                <option value="<?= htmlspecialchars($r) ?>" <?= $r === $row_code ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($r) ?>
+                </option>
+            <?php endforeach; ?>
+          </select>
         </div>
-
-        <!-- Button rows populated by js/location-buttons.js -->
-        <div id="rowButtons"   style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px"></div>
-        <div id="bayButtons"   style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px"></div>
-        <div id="levelButtons" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px"></div>
-        <div id="sideButtons"  style="display:flex; flex-wrap:wrap; gap:6px"></div>
-
-        <!-- Hidden inputs updated by the buttons -->
-        <input type="hidden" id="row_code_input"   name="row_code"   value="<?= htmlspecialchars($row_code) ?>">
-        <input type="hidden" id="bay_num_input"    name="bay_num"    value="<?= htmlspecialchars($bay_num) ?>">
-        <input type="hidden" id="level_code_input" name="level_code" value="<?= htmlspecialchars($level_code) ?>">
-        <input type="hidden" id="side_input"       name="side"       value="<?= htmlspecialchars($side) ?>">
+        <div>
+          <label for="bay_num_select" class="label">Bay</label>
+          <select id="bay_num_select" name="bay_num" class="input" <?= $row_code === '' ? 'disabled' : '' ?>>
+            <option value="">— Any —</option>
+            </select>
+        </div>
+        <div>
+          <label for="level_code_select" class="label">Level</label>
+          <select id="level_code_select" name="level_code" class="input" <?= $bay_num === '' ? 'disabled' : '' ?>>
+            <option value="">— Any —</option>
+            </select>
+        </div>
+        <div>
+          <label for="side_select" class="label">Side</label>
+          <select id="side_select" name="side" class="input" <?= $level_code === '' ? 'disabled' : '' ?>>
+            <option value="">— Any —</option>
+            </select>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- CONTROLS UNDERNEATH -->
   <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end; margin-top:10px;">
     <div>
       <label class="label">Rows</label>
@@ -286,7 +322,7 @@ ob_start();
           <th>SKU</th>
           <th>Description</th>
           <th>Location Code</th>
-          <th>ΔQty</th>
+          <th>&Delta;Qty</th>
           <th>Type</th>
           <th>Reference</th>
           <th>User</th>
@@ -303,7 +339,7 @@ ob_start();
               <td data-label="SKU"><?= htmlspecialchars($r['sku'] ?? '') ?></td>
               <td data-label="Description"><?= htmlspecialchars($r['sku_desc'] ?? '') ?></td>
               <td data-label="Location Code"><?= htmlspecialchars($r['location_code'] ?? '') ?></td>
-              <td data-label="ΔQty" class="qty"><?= (int)($r['signed_delta'] ?? 0) ?></td>
+              <td data-label="&Delta;Qty" class="qty"><?= (int)($r['signed_delta'] ?? 0) ?></td>
               <td data-label="Type"><?= htmlspecialchars($r['movement_type'] ?? '') ?></td>
               <td data-label="Reference"><?= htmlspecialchars($r['reference'] ?? '') ?></td>
               <td data-label="User"><?= htmlspecialchars($r['user_name'] ?? '') ?></td>
@@ -340,80 +376,121 @@ ob_start();
 <?php
 $content = ob_get_clean();
 
-// ---- Footer JS injection for location-buttons.js ----
-$loc_json = json_encode($locations, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);
-$js_fs    = __DIR__ . '/js/location-buttons.js';
-$ver      = is_file($js_fs) ? filemtime($js_fs) : time();
-$base_url = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-$src_url  = htmlspecialchars($base_url . '/js/location-buttons.js?v=' . $ver, ENT_QUOTES, 'UTF-8');
+// ---- Footer JS injection for dynamic location selection ----
+$boot_data = [
+    'rows' => $rows_list, // All unique row codes
+    'baysByRow' => $baysByRow, // Bays nested under rows
+    'levelsByRow' => $levelsByRow, // Levels nested under bays
+    'sidesByRow' => $sidesByRow, // Sides nested under levels
+    'current' => [
+        'row' => $row_code,
+        'bay' => $bay_num,
+        'level' => $level_code,
+        'side' => $side,
+    ]
+];
 
-$footer_js = <<<HTML
+// JSON encode the data for the JavaScript
+try {
+  $boot_json = json_encode($boot_data, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+  $footer_js = '<script id="history-location-data" type="application/json">' . $boot_json . '</script>';
+} catch (Throwable $e) {
+  error_log('[history.php] boot json encode failed: ' . $e->getMessage());
+  $footer_js = '<script id="history-location-data" type="application/json">{"rows":[]}</script>';
+}
+
+// Inject the custom JavaScript for the dropdown logic
+$footer_js .= <<<HTML
 <script>
-// Provide data for the location-buttons
-window.PLACE_LOCATIONS = $loc_json;
-</script>
-<!-- 1) Load buttons library first -->
-<script defer src="$src_url"></script>
-<!-- 2) Then run our stabilizer AFTER it has initialized -->
-<script>
-(function(){
-  // Read params safely (works after reloads)
-  function getParam(name){
-    var m = new RegExp('[?&]'+name+'=([^&]*)').exec(location.search);
-    return m ? decodeURIComponent(m[1].replace(/\\+/g,' ')) : '';
-  }
+(function() {
+    const dataEl = document.getElementById('history-location-data');
+    if (!dataEl) return;
 
-  function applyPrefill(){
-    var r = document.getElementById('row_code_input');
-    var b = document.getElementById('bay_num_input');
-    var l = document.getElementById('level_code_input');
-    var s = document.getElementById('side_input');
+    let bootData;
+    try {
+        bootData = JSON.parse(dataEl.textContent);
+    } catch (e) {
+        console.error("Failed to parse location data:", e);
+        return;
+    }
 
-    // Never overwrite non-empty inputs; if empty, try URL params
-    if (r && !r.value) r.value = getParam('row_code') || r.value;
-    if (b && !b.value) b.value = getParam('bay_num') || b.value;
-    if (l && !l.value) l.value = getParam('level_code') || l.value;
-    if (s && !s.value) s.value = getParam('side') || s.value;
+    const { rows, baysByRow, levelsByRow, sidesByRow, current } = bootData;
+    
+    // Select elements
+    const s_row = document.getElementById('row_code_select');
+    const s_bay = document.getElementById('bay_num_select');
+    const s_lvl = document.getElementById('level_code_select');
+    const s_side = document.getElementById('side_select');
 
-    updateLabel();
-  }
+    // Helper to populate a select box
+    function populate(selectEl, values, selectedValue) {
+        const currentVal = selectEl.value; // Save the selected value before clearing
+        selectEl.innerHTML = '<option value="">— Any —</option>';
+        if (values && values.length > 0) {
+            selectEl.disabled = false;
+            values.forEach(val => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = val;
+                // Pre-select if it matches the current GET param value
+                if (val === selectedValue) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        } else {
+            selectEl.disabled = true;
+        }
+    }
 
-  function updateLabel(){
-    var r = document.getElementById('row_code_input')?.value || '';
-    var b = document.getElementById('bay_num_input')?.value || '';
-    var l = document.getElementById('level_code_input')?.value || '';
-    var s = document.getElementById('side_input')?.value || '';
-    var code = (r && b && l && s) ? (r+'-'+b+'-'+l+'-'+s) : '— none —';
-    var el = document.getElementById('locCodeText');
-    if (el) el.textContent = code;
-  }
+    // Update Bay dropdown based on Row selection
+    function updateBays() {
+        const rowVal = s_row.value;
+        const bays = baysByRow[rowVal] || [];
+        populate(s_bay, bays, current.bay);
+        if (!rowVal) {
+            // Reset and disable subsequent dropdowns if the main filter is cleared
+            s_bay.value = s_lvl.value = s_side.value = '';
+            s_lvl.disabled = true;
+            s_side.disabled = true;
+        }
+        updateLevels(); // Cascade the update
+    }
 
-  // Bind listeners to keep label sticky
-  document.addEventListener('change', updateLabel, true);
-  document.addEventListener('click',  updateLabel, true);
+    // Update Level dropdown based on Bay selection
+    function updateLevels() {
+        const rowVal = s_row.value;
+        const bayVal = s_bay.value;
+        const levels = levelsByRow[rowVal] ? levelsByRow[rowVal][bayVal] || [] : [];
+        populate(s_lvl, levels, current.level);
+        if (!bayVal) {
+             s_lvl.value = s_side.value = '';
+             s_side.disabled = true;
+        }
+        updateSides(); // Cascade the update
+    }
 
-  // Run once DOM is ready, then once more on the next tick to win any race
-  window.addEventListener('DOMContentLoaded', function(){
-    // First pass: restore from URL/hidden inputs
-    applyPrefill();
-    // Second pass after location-buttons likely finished any async work
-    setTimeout(applyPrefill, 0);
-  });
+    // Update Side dropdown based on Level selection
+    function updateSides() {
+        const rowVal = s_row.value;
+        const bayVal = s_bay.value;
+        const lvlVal = s_lvl.value;
+        const sides = sidesByRow[rowVal] && sidesByRow[rowVal][bayVal] ? sidesByRow[rowVal][bayVal][lvlVal] || [] : [];
+        populate(s_side, sides, current.side);
+    }
 
-  // Clear button logic (doesn't flicker back)
-  window.addEventListener('DOMContentLoaded', function(){
-    var clr = document.getElementById('locClearBtn');
-    if (!clr) return;
-    clr.addEventListener('click', function(){
-      ['row_code_input','bay_num_input','level_code_input','side_input'].forEach(function(id){
-        var el = document.getElementById(id); if (el) el.value = '';
-      });
-      updateLabel();
-    });
-  });
+    // Attach event listeners for cascading updates
+    s_row.addEventListener('change', updateBays);
+    s_bay.addEventListener('change', updateLevels);
+    s_lvl.addEventListener('change', updateSides);
+
+    // Initial population on page load (uses current URL parameters)
+    updateBays();
+    updateLevels();
+    updateSides();
+
+    // The form will naturally submit with the selected values.
 })();
 </script>
 HTML;
-
 
 include __DIR__ . '/templates/layout.php';

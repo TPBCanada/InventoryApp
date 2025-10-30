@@ -1,42 +1,9 @@
 <?php
 // templates/navbar.php
-// NOTE: Assuming this file is located in the /templates directory,
-// where access_control.php is also located.
-
-// --- 1. Load Permissions Map and user info ---
-
-// Get the central permissions map. This file MUST be included.
-// It uses file_get_contents to ensure we only load the map data (variables)
-// without executing the security gate (which has already run on the main page).
-// Instead, let's just use include, as the security check is conditional inside the file.
-// We must ensure $role_id is available before including.
-
-// If $role_id is not set, try to pull it from the session. This is the crucial fix.
-$role_id = $role_id ?? ($_SESSION['role_id'] ?? null);
-
-// Include the access control file to get the $page_permissions_by_role map
-// Note: __DIR__ is the directory of navbar.php (i.e., /templates)
-include __DIR__ . '/access_control.php';
-
-// The permissions map is now available as $page_permissions_by_role
-$page_map = $page_permissions_by_role ?? [];
-$menu_left = [];
-
-// --- 2. Filter Menu Links for the current user ---
-
-// Iterate through the map and only include links the user is allowed to see
-foreach ($page_map as $file => $allowed_roles) {
-    if (in_array($role_id, $allowed_roles, true)) {
-        // Create a human-readable label from the file name
-        $label = ucwords(str_replace(['_', '.php'], [' ', ''], $file));
-        $menu_left[$file] = $label;
-    }
-}
-
-// --- 3. Remaining helpers (as before) ---
 
 $BASE_URL = $BASE_URL ?? rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
 $username = $username ?? ($_SESSION['username'] ?? '');
+$role_id = $role_id ?? ($_SESSION['role_id'] ?? null);
 
 $h = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $u = static fn($file) => rtrim($BASE_URL, '/') . '/' . ltrim($file, '/');
@@ -46,8 +13,59 @@ $active = static fn($file) => $REQ_FILE === $file ? ' is-active' : '';
 $isCurrent = static fn($file) => $REQ_FILE === $file ? ' aria-current="page"' : '';
 
 $brand_link = 'dashboard.php'; // brand always links to dashboard
-unset($menu_left['dashboard.php']); // Remove dashboard from the main loop, it's the brand link
 
+$menu_common = [
+];
+
+$menu_by_role = [
+    1 => [
+        'manage_roles.php' => 'Roles',
+        'manage_users.php' => 'Users',
+        'manage_sku.php' => 'Manage Sku',
+        'manage_location.php' => 'Manage Location',
+        'invSku.php' => 'SKU Details',
+        'invLoc.php' => 'Location Details',
+        'history.php' => 'Transaction History',
+        'place.php' => 'Place',
+        'take.php' => 'Take',
+        'transfer.php' => 'Transfer',
+        'ai_reports.php' => 'Reports',
+        'audit.php' => 'Audit',
+        'whse_sup.php' => 'Supplies',
+        'invReq.php' => 'Request',
+    ],
+    2 => [
+        'manage_users.php' => 'Users',
+        'invSku.php' => 'SKU',
+        'invLoc.php' => 'SKU by Location',
+        'history.php' => 'Transaction History',
+        'place.php' => 'Place',
+        'take.php' => 'Take',
+        'transfer.php' => 'Transfer',
+        'whse_sup.php' => 'Supplies',
+        'invReq.php' => 'Request',
+    ],
+    3 => [
+        'invSku.php' => 'SKU',
+        'invLoc.php' => 'SKU by Location',
+        'whse_sup.php' => 'Supplies',
+        'invReq.php' => 'Request',
+    ],
+    4 => [
+        'invSku.php' => 'SKU',
+        'invLoc.php' => 'SKU by Location',
+        'history.php' => 'Transaction History',
+        'place.php' => 'Place',
+        'take.php' => 'Take',
+        'transfer.php' => 'Transfer',
+        'whse_sup.php' => 'Supplies',
+        'invReq.php' => 'Request',
+    ],
+
+
+];
+
+$menu_left = ($menu_by_role[$role_id] ?? []) + $menu_common;
 ?>
 
 <nav class="navbar">

@@ -12,8 +12,9 @@ require_once 'dbusers.php';
 // Restrict access to admins only
 $allowed_roles = [1]; // extend as needed
 if (!in_array($_SESSION['role_id'] ?? null, $allowed_roles, true)) {
-    die("<p style='color:red; text-align:center;'>Access denied. Only certain roles can access this page.</p>");
+    die("<h1 style='color:red; text-align:center;'>Access denied. Only certain roles can access this page.</h1>");
 }
+
 
 $message = "";
 

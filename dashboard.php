@@ -11,6 +11,8 @@ $username = $_SESSION['username'];
 $user_id  = $_SESSION['user_id'];
 $role_id  = $_SESSION['role_id'] ?? 0;
 
+require_once __DIR__ . '/templates/access_control.php';
+
 if (!$conn) { die("Connection failed: " . mysqli_connect_error()); }
 
 $history_table = 'inventory_movements'; // history table
@@ -210,8 +212,6 @@ $title = 'Dashboard';
 $BASE_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 
 ob_start();
-
-
 ?>
 
 <!-- CONTENT -->

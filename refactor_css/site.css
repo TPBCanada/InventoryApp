@@ -1,10 +1,12 @@
 /* ================================
-   InventoryApp - Global Stylesheet
-   (site.css) — consolidated & cleaned
+  InventoryApp - Global Stylesheet
+  (site.css) — consolidated & cleaned
 ================================ */
 
+@import url('folder.css');
+
 /* --------------------------------------
-   TOKENS (source of truth)
+  TOKENS (source of truth)
 -------------------------------------- */
 :root{
   /* Brand */
@@ -27,7 +29,7 @@
 
   /* Transitions + system */
   --transition:180ms ease;
-  color-scheme:light dark;
+  color-scheme:light; /* Updated: Changed to 'light' only */
 
   /* Spacing scale */
   --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem; --space-5:1.25rem; --space-6:1.5rem;
@@ -38,27 +40,8 @@
   --bp-lg: 1024px;
 }
 
-/* Dark theme (manual via <html data-theme="dark">) */
-[data-theme="dark"]{
-  --bg:#0b1220; --surface:#0f172a; --surface-2:#111827; --border:#1f2937;
-  --text:#e5e7eb; --text-muted:#9ca3af;
-  --shadow:0 10px 30px rgba(0,0,0,.35);
-  --nav-grad:linear-gradient(90deg,#0b1020,#141a2b 40%,#0a0f1c);
-}
-
-/* Auto-dark if no explicit data-theme */
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme]){
-    --bg:#0b1220; --surface:#0f172a; --surface-2:#111827; --border:#1f2937;
-    --text:#e5e7eb; --text-muted:#9ca3af;
-    --shadow:0 10px 30px rgba(0,0,0,.35);
-    --nav-grad:linear-gradient(90deg,#0b1020,#141a2b 40%,#0a0f1c);
-    color-scheme:dark;
-  }
-}
-
 /* --------------------------------------
-   BASE / RESET
+  BASE / RESET
 -------------------------------------- */
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -77,7 +60,7 @@ img{max-width:100%;display:block}
 a{color:var(--brand-700);text-decoration:none;transition:opacity var(--transition); -webkit-tap-highlight-color: rgba(0,0,0,0.1); }
 a:hover{opacity:.85}
 button, .btn, input, select, textarea {
-  min-height: 44px;  /* touch target */
+  min-height: 44px; /* touch target */
   padding: 10px 12px;
   border-radius: 10px;
 }
@@ -99,7 +82,7 @@ button, .btn, input, select, textarea {
 }
 
 /* --------------------------------------
-   LAYOUT & TYPE
+  LAYOUT & TYPE
 -------------------------------------- */
 .container{max-width:1200px;margin-inline:auto;width:min(100% - 20px, 1200px)}
 main.container{margin:24px auto;padding:0 0}
@@ -123,7 +106,7 @@ small,.muted,.text-muted{color:var(--text-muted)}
 .grow{flex-grow:1}.grow-0{flex-grow:0}.shrink{flex-shrink:1}.shrink-0{flex-shrink:0}
 
 /* --------------------------------------
-   NAVBAR (grid-based)
+  NAVBAR (grid-based)
 -------------------------------------- */
 .navbar{
   height:var(--nav-height);
@@ -157,14 +140,13 @@ small,.muted,.text-muted{color:var(--text-muted)}
 .navbar .nav-left,.navbar .nav-right{ display:flex;align-items:center;gap:16px; }
 .navbar .nav-center{ display:flex; justify-content:center; gap:12px; }
 
-[data-theme="dark"] .navbar{border-bottom-color:color-mix(in srgb, var(--border) 60%, transparent)}
 
 /* Fallback if your navbar is just <nav> */
 nav:not(.navbar){background:var(--surface);border-bottom:1px solid var(--border);padding:8px 12px}
 
 /* Desktop-only helper */
 .desktop-only { display:flex; }
-@media (max-width: 768px) {         
+@media (max-width: 768px) {    
   .desktop-only { display:none; }
 }
 
@@ -175,12 +157,12 @@ nav:not(.navbar){background:var(--surface);border-bottom:1px solid var(--border)
   border-radius:10px; cursor:pointer;
 }
 .hamburger:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
-@media (max-width: 768px) {        
+@media (max-width: 768px) {   
   .hamburger{ display:flex; }
 }
 
 /* --------------------------------------
-   CARDS
+  CARDS
 -------------------------------------- */
 .card{
   background:var(--surface);
@@ -193,7 +175,7 @@ nav:not(.navbar){background:var(--surface);border-bottom:1px solid var(--border)
 .card--wide{grid-column:1 / -1}
 
 /* --------------------------------------
-   BUTTONS (with 3D styling)
+  BUTTONS (with 3D styling)
 -------------------------------------- */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -222,7 +204,7 @@ nav:not(.navbar){background:var(--surface);border-bottom:1px solid var(--border)
 }
 .btn-outline{background:transparent;border-color:var(--border)}
 .btn--ghost{
-  background:linear-gradient(to bottom, color-mix(in srgb, var(--surface-2) 90%, transparent), var(--surface));
+  background:linear-gradient(to bottom, color-mix(in srgb, var(--brand-2) 90%, transparent), var(--brand));
   border-color:color-mix(in srgb, var(--border) 85%, transparent);
 }
 .btn-danger{background:var(--danger);color:var(--text-inv)}
@@ -230,7 +212,7 @@ nav:not(.navbar){background:var(--surface);border-bottom:1px solid var(--border)
 .btn-warning{background:var(--warning);color:var(--text-inv)}
 
 /* --------------------------------------
-   FORMS
+  FORMS
 -------------------------------------- */
 label{font-weight:600;margin-bottom:6px;display:inline-block}
 input,select,textarea{
@@ -247,41 +229,49 @@ input::placeholder,textarea::placeholder{color:var(--text-muted);opacity:1}
 .divider{height:1px; margin:12px 0; background:color-mix(in srgb, var(--border) 85%, transparent);}
 
 /* --------------------------------------
-   TABLES
+  TABLES
 -------------------------------------- */
-table,.table{
-  width:100%;border-collapse:collapse;background:var(--surface);
-  border:1px solid var(--border);border-radius:12px;overflow:hidden
-}
-th,td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:left;color:var(--text)}
-th{background:var(--surface-2);font-weight:700}
-tr:hover td{background:color-mix(in srgb, var(--brand) 6%, transparent)}
-tbody tr:nth-child(odd) td{background:color-mix(in srgb, var(--surface-2) 40%, transparent)}
-.table-wrap{width:100%;overflow:auto}
 
-/* Responsive tables */
-.table-responsive{
-  width:100%; overflow-x:auto; -webkit-overflow-scrolling: touch;
-  border-radius: 10px; border:1px solid var(--border);
+/* Style the total summary table wrapper */
+table.total-summary-table {
+   /* Stronger visual separation */
+   border: 2px solid var(--brand-600);
+   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
-@media (max-width: 640px){
-  table.table-stack { border-collapse: collapse; width:100%; }
-  .table-stack thead { display:none; }
-  .table-stack tr {
-    display:grid; grid-template-columns: 1fr 1fr; 
-    padding: 8px; border-bottom:1px solid #eee;
-  }
-  .table-stack td {
-    display:block; padding: 6px 8px;
-  }
-  .table-stack td::before{
-    content: attr(data-label);
-    display:block; font-weight:600; opacity:.75; margin-bottom:2px;
-  }
+
+/* Remove default table styling that conflicts with total row */
+table.total-summary-table tr:hover td,
+table.total-summary-table tbody tr:nth-child(odd) td {
+   background: var(--surface); /* Override default table hover/stripe */
+}
+
+/* Style the Total Row */
+.total-summary-table .total-row td {
+   /* Light background with brand color */
+   background: color-mix(in srgb, var(--nav-grad) 15%, var(--surface)) !important;
+   font-weight: 700;
+   padding: 14px;
+   /* Strong line above the row (though the table border helps too) */
+   border-top: 2px solid var(--brand);
+   border-bottom: none;
+   color: var(--text);
+}
+
+/* Style the Total Number itself (wrapped in <strong> in PHP) */
+.total-summary-table .total-row strong {
+   font-size: 1.2em; /* Bigger text */
+   color: var(--brand-700); /* Use danger/red for attention, or brand color */
+   /* If you prefer the brand color: color: var(--brand-700); */
+   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Add some space between the two tables */
+.total-summary-table {
+   margin-bottom: 20px;
 }
 
 /* --------------------------------------
-   MESSAGES / BADGES / TOASTS
+  MESSAGES / BADGES / TOASTS
 -------------------------------------- */
 .message{
   padding:12px 14px;border-radius:8px;border:1px solid var(--border);
@@ -336,7 +326,7 @@ tbody tr:nth-child(odd) td{background:color-mix(in srgb, var(--surface-2) 40%, t
 .toast.is-info::before{background:var(--info)}
 
 /* --------------------------------------
-   INVENTORY PAGES — LAYOUT HELPERS
+  INVENTORY PAGES — LAYOUT HELPERS
 -------------------------------------- */
 
 /* 1) Action row: center buttons */
@@ -423,7 +413,7 @@ fieldset{
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   border: 0; width: 100%; height: 100%; cursor: pointer;
-  z-index: 1;  
+  z-index: 1;
 }
 .scan-drawer:not([data-open="true"]) .scan-drawer__backdrop { display: none !important; }
 
@@ -437,7 +427,7 @@ fieldset{
   transform:translateX(100%);
   transition:transform .25s ease;R
   display:flex; flex-direction:column; gap:12px;
-  z-index: 2;  
+  z-index: 2;
 }
 .scan-drawer[data-open="true"] .scan-drawer__panel{ transform:translateX(0); }
 .scan-hint{ font-size:.85rem; color: var(--muted, #6c757d); margin: 6px 0 0; }
@@ -506,11 +496,135 @@ th{ font-size:.8rem; color: var(--muted, #6c757d); font-weight:600; }
 
 
 /* --------------------------------------
-   HAMBURGER + MOBILE MENU
+  1. FOLDER MENU CONTAINER
+-------------------------------------- */
+
+.folder-menu {
+   display: flex;
+   flex-wrap: nowrap; /* Keep tabs on one row */
+   width: 100%;
+   margin-bottom: -1px; /* Align content wrapper border exactly with tab base */
+   position: relative;
+   z-index: 100; /* Ensure tabs sit above all page content */
+   /* Add padding to account for the container padding in layout.php */
+   /* If main.container has 10px padding on the sides, this needs adjustment
+    Assuming container is set up correctly, we proceed with base styles */
+}
+
+/* --------------------------------------
+  2. INDIVIDUAL FOLDER TABS
+-------------------------------------- */
+
+.folder-tab {
+   position: relative;
+   margin-right: 2px; /* Small gap between tabs */
+   z-index: 1;
+   padding: 0 10px;
+   height: 44px; /* Slightly taller for visual weight, matching button min-height */
+   background: transparent;
+
+   /* The clip-path creates the folder tab shape */
+   clip-path: polygon(0% 100%, 15px 0%, 100% 0%, 100% 100%, 85% 100%, 15px 100%);
+   transition: z-index 0.3s var(--transition);
+}
+
+.tab-link {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 8px;
+   padding: 0 16px;
+   height: 100%;
+   text-decoration: none;
+   font-weight: 600;
+   color: var(--text-muted); /* Non-active text */
+   transition: background-color var(--transition), color var(--transition), opacity var(--transition);
+}
+
+.folder-tab:hover:not(.active) .tab-link {
+   color: var(--text); /* Darken text on hover */
+   opacity: 0.95;
+}
+
+/* Style for the colored/branded tabs (e.g., Analytics) */
+.tab-link.is-green {
+   /* Using a specific green for visibility, or define a --green-brand token */
+   --green-brand: #48BB78;
+   background-color: var(--green-brand);
+   color: var(--text-inv); /* White text */
+
+   /* Apply the clip-path directly to the link for consistent background shape */
+   clip-path: inherit;
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+}
+
+/* --------------------------------------
+  3. ACTIVE TAB STYLES
+-------------------------------------- */
+
+.folder-tab.active {
+   background-color: var(--surface); /* White/Surface background for the active tab */
+   border: 1px solid var(--border);
+   border-bottom: 0; /* Important: remove bottom border for content overlap */
+   border-radius: var(--radius-sm) var(--radius-sm) 0 0; /* Rounded top corners */
+   z-index: 101; /* Bring active tab furthest forward */
+
+   /* Override the clip-path for the active tab to be a simple rounded rectangle */
+   clip-path: none;
+   margin-right: 0; /* Remove gap next to active tab */
+   margin-left: 0;
+   box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* Subtle shadow on top edge */
+}
+
+.folder-tab.active .tab-link {
+   background: transparent; /* Remove link background in active tab */
+   color: var(--text); /* Use primary text color for active tab link */
+   clip-path: none;
+}
+
+/* Active colored/branded tab (Analytics is green but currently active) */
+.folder-tab.active .tab-link.is-green {
+   background-color: transparent;
+   color: var(--green-brand); /* Keep the color accent on the text */
+   /* Important: reset the positioning attributes from the general .tab-link.is-green */
+   position: static;
+}
+
+
+/* --------------------------------------
+  4. CONTENT WRAPPER
+-------------------------------------- */
+
+.folder-content-wrapper {
+   /* Main container for the rest of the page content */
+   width: 100%;
+   grid-column: 1 / -1; /* Ensure it spans the full width of the container */
+   margin-top: -44px; /* Pull the content up to align with the bottom of the tabs */
+  
+   /* Using card styles for the content area below the tabs */
+   background: var(--surface);
+   border: 1px solid var(--border);
+   border-radius: 0 var(--radius) var(--radius) var(--radius); /* Round all but top-left corner */
+   box-shadow: var(--shadow); /* Apply global shadow */
+   z-index: 99; /* Below tabs */
+}
+
+.folder-content-base {
+   /* Padding for the content inside the wrapper */
+   padding: 24px; /* Give a bit more space than a standard card for the main section */
+   padding-top: 40px; /* Adjust top padding to look right under the tabs */
+}
+
+/* --------------------------------------
+  HAMBURGER + MOBILE MENU
 -------------------------------------- */
 @media (max-width: 768px){
   .navbar > .container{
-    grid-template-columns: auto auto; /* brand | hamburger */
+   grid-template-columns: auto auto; /* brand | hamburger */
   }
   .hamburger{ justify-self: end; }
 }
@@ -549,17 +663,17 @@ th{ font-size:.8rem; color: var(--muted, #6c757d); font-weight:600; }
 body.menu-open{ overflow:hidden; padding-right: env(safe-area-inset-right); }
 
 /* === FINAL OVERRIDES: ensure hamburger appears under 768px === */
-.hamburger{ display:none !important; }              /* hide by default */
+.hamburger{ display:none !important; }       /* hide by default */
 @media (max-width: 768px){
-  .hamburger{ display:flex !important; }            /* show on small screens */
-  .desktop-only{ display:none !important; }         /* hide desktop nav on small screens */
+  .hamburger{ display:flex !important; }      /* show on small screens */
+  .desktop-only{ display:none !important; }    /* hide desktop nav on small screens */
   .navbar > .container{
-    grid-template-columns: auto auto;               /* brand | hamburger on one row */
+   grid-template-columns: auto auto;       /* brand | hamburger on one row */
   }
   .hamburger{ justify-self:end; }
 }
 
 /* (optional debug) — delete after confirming */
 @media (max-width: 768px){
-  .hamburger{ outline:1px dashed red !important; }  /* visual confirmation */
+  .hamburger{ outline:1px dashed red !important; } /* visual confirmation */
 }

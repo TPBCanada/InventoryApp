@@ -15,9 +15,13 @@
 
 declare(strict_types=1);
 session_start();
-require_once __DIR__ . '/dbinv.php'; // $conn (mysqli)
 
-$_SESSION['ai_preview'] = $preview;
+require_once __DIR__ . '/dbinv.php';
+require_once __DIR__ . '/utils/inventory_ops.php';
+require_once __DIR__ . '/utils/helpers.php';
+
+$preview = ['columns'=>[], 'rows'=>[], 'row_count'=>0, 'sql'=>''];
+// $_SESSION['ai_preview'] = $preview;
 
 
 $OPENAI_KEY = (defined('OPENAI_API_KEY') && OPENAI_API_KEY !== '')
@@ -29,13 +33,7 @@ $user_id  = (int)($_SESSION['user_id'] ?? 0);
 $username = $_SESSION['username'] ?? 'User';
 $role_id  = (int)($_SESSION['role_id'] ?? 0);
 
-if (isset($_GET['envdebug']) && in_array($role_id, [1,2,3], true)) {
-  header('Content-Type: text/plain');
-  var_dump(getenv('OPENAI_API_KEY'));
-  var_dump($_SERVER['OPENAI_API_KEY'] ?? null);
-  var_dump($_SERVER['REDIRECT_OPENAI_API_KEY'] ?? null);
-  exit;
-}
+require_once __DIR__ . '/templates/access_control.php';
 
 // Restrict to admins/managers/analysts
 $can_use_ai = in_array($role_id, [1,2,3], true);
@@ -285,6 +283,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && $action==='ask') {
   if ($assistant_output !== '') {
     $history[] = ['role' => 'assistant', 'content' => $assistant_output];
   }
+  $_SESSION['ai_preview'] = $preview;
 }
 
       // Optionally surface $debug_note in the UI (you already render it)
@@ -316,9 +315,8 @@ ob_start();
 </div>
 
 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
-  <a class="btn" href="export_csv.php">Export CSV</a>
-  <a class="btn" href="export_excel.php">Export Excel</a>
-  <a class="btn btn--ghost" href="import.php">Import (CSV / Excel)</a>
+  <a class="btn" href="utils/export_csv.php?mode=preview">Export CSV (<?= (int)$preview['row_count'] ?> rows)</a>
+  <a class="btn btn--ghost" href="utils/import.php">Import (CSV / Excel)</a>
 </div>
 
 <div class="card card--pad" style="max-height:50vh; overflow:auto;">
@@ -357,10 +355,6 @@ ob_start();
         </tbody>
       </table>
     </div>
-    <form method="post" action="export_csv.php" style="margin-top:12px;">
-      <input type="hidden" name="sql" value="<?= h($preview['sql']) ?>" />
-      <button class="btn" type="submit">Export CSV (up to <?= (int)$ROW_CAP_CSV ?>)</button>
-    </form>
   </div>
 <?php endif; ?>
 

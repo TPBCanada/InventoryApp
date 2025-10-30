@@ -17,5 +17,5 @@
 .btn--outline{ background:transparent;color:var(--brand);border:1px solid var(--brand) }
 .btn--outline:hover{ background: color-mix(in srgb, var(--brand) 10%, transparent) }
 
-.btn--ghost{ background:transparent;color:var(--text);border:1px solid var(--border) }
+.btn--ghost{ background:transparent;color:var(--danger);border:1px solid var(--border) }
 .btn--ghost:hover{ background: color-mix(in srgb, var(--text) 6%, transparent) }

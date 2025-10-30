@@ -1,79 +1,59 @@
-[23-Oct-2025 11:43:17 America/Toronto] PHP Warning:  Undefined variable $core_boot in /home2/xserqhmy/public_html/dev/transfer.php on line 462
-[23-Oct-2025 11:43:17 America/Toronto] [transfer.php] boot json encode failed: array_merge(): Argument #1 must be of type array, null given
-[23-Oct-2025 11:43:21 America/Toronto] PHP Warning:  Undefined variable $core_boot in /home2/xserqhmy/public_html/dev/transfer.php on line 462
-[23-Oct-2025 11:43:21 America/Toronto] [transfer.php] boot json encode failed: array_merge(): Argument #1 must be of type array, null given
-[23-Oct-2025 09:46:06 America/Boise] PHP Warning:  Undefined variable $preview in /home2/xserqhmy/public_html/dev/ai_reports.php on line 20
-[23-Oct-2025 09:49:43 America/Boise] PHP Warning:  Undefined variable $preview in /home2/xserqhmy/public_html/dev/ai_reports.php on line 20
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:06:11 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 12:17:05 America/Toronto] [transfer] exception: BIGINT UNSIGNED value is out of range in '(`xserqhmy_whse`.`inventory`.`quantity` - abs(NEW.quantity_change))'
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:28:01 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:05 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:05 America/Boise] PHP Parse error:  syntax error, unexpected identifier " " in /home2/xserqhmy/public_html/dev/templates/layout.php on line 5
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:06 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:06 America/Boise] PHP Parse error:  syntax error, unexpected identifier " " in /home2/xserqhmy/public_html/dev/templates/layout.php on line 5
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:12 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:50 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:51 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 4
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 6
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 8
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 10
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $DEBUG in /home2/xserqhmy/public_html/dev/invSku.php on line 12
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $q in /home2/xserqhmy/public_html/dev/invSku.php on line 18
-[23-Oct-2025 10:29:52 America/Boise] PHP Warning:  Undefined variable $rows in /home2/xserqhmy/public_html/dev/invSku.php on line 20
+[29-Oct-2025 10:30:08 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:30:15 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:30:35 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:32:03 America/Boise] PHP Warning:  Undefined variable $allowed_roles in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:03 America/Boise] PHP Fatal error:  Uncaught TypeError: in_array(): Argument #2 ($haystack) must be of type array, null given in /home2/xserqhmy/public_html/dev/manage_roles.php:13
+Stack trace:
+#0 /home2/xserqhmy/public_html/dev/manage_roles.php(13): in_array(3, NULL, true)
+#1 {main}
+  thrown in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:04 America/Boise] PHP Warning:  Undefined variable $allowed_roles in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:04 America/Boise] PHP Fatal error:  Uncaught TypeError: in_array(): Argument #2 ($haystack) must be of type array, null given in /home2/xserqhmy/public_html/dev/manage_roles.php:13
+Stack trace:
+#0 /home2/xserqhmy/public_html/dev/manage_roles.php(13): in_array(3, NULL, true)
+#1 {main}
+  thrown in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:13 America/Boise] PHP Warning:  Undefined variable $allowed_roles in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:13 America/Boise] PHP Fatal error:  Uncaught TypeError: in_array(): Argument #2 ($haystack) must be of type array, null given in /home2/xserqhmy/public_html/dev/manage_roles.php:13
+Stack trace:
+#0 /home2/xserqhmy/public_html/dev/manage_roles.php(13): in_array(3, NULL, true)
+#1 {main}
+  thrown in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:13 America/Boise] PHP Warning:  Undefined variable $allowed_roles in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:13 America/Boise] PHP Fatal error:  Uncaught TypeError: in_array(): Argument #2 ($haystack) must be of type array, null given in /home2/xserqhmy/public_html/dev/manage_roles.php:13
+Stack trace:
+#0 /home2/xserqhmy/public_html/dev/manage_roles.php(13): in_array(3, NULL, true)
+#1 {main}
+  thrown in /home2/xserqhmy/public_html/dev/manage_roles.php on line 13
+[29-Oct-2025 10:32:44 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:33:24 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:33:25 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:35:26 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:36:07 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:36:08 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:36:23 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:36:32 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:36:33 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:36:38 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:36:39 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:41:39 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:43:35 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:43:35 America/Boise] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 52
+[29-Oct-2025 10:46:23 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:46:31 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:46:37 America/Boise] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/xserqhmy/public_html/dev/templates/layout.php:43) in /home2/xserqhmy/public_html/dev/templates/access_control.php on line 49
+[29-Oct-2025 10:51:31 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:51:50 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:52:08 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:52:10 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:52:17 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:52:21 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:52:21 America/Boise] PHP Parse error:  syntax error, unexpected double-quoted string "><button>Return to Home</butto...", expecting ")" in /home2/xserqhmy/public_html/dev/manage_roles.php on line 17
+[29-Oct-2025 10:53:03 America/Boise] PHP Parse error:  syntax error, unexpected token "else" in /home2/xserqhmy/public_html/dev/move.php on line 430
+[29-Oct-2025 12:55:28 America/Toronto] PHP Fatal error:  Uncaught mysqli_sql_exception: Table 'xserqhmy_whse.saved_reports' doesn't exist in /home2/xserqhmy/public_html/dev/reports.php:289
+Stack trace:
+#0 /home2/xserqhmy/public_html/dev/reports.php(289): mysqli->query('SELECT id, name...')
+#1 {main}
+  thrown in /home2/xserqhmy/public_html/dev/reports.php on line 289
+[30-Oct-2025 08:38:41 America/Boise] PHP Warning:  Array to string conversion in /home2/xserqhmy/public_html/dev/dashboard.php on line 374
+[30-Oct-2025 08:39:23 America/Boise] PHP Warning:  Array to string conversion in /home2/xserqhmy/public_html/dev/dashboard.php on line 374

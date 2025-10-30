@@ -1,0 +1,35 @@
+[26-Oct-2025 10:47:44 America/Boise] PHP Warning:  include(dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 9
+[26-Oct-2025 10:47:44 America/Boise] PHP Warning:  include(): Failed opening 'dbinv.php' for inclusion (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 9
+[26-Oct-2025 10:47:44 America/Boise] PHP Warning:  Undefined variable $conn in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 25
+[26-Oct-2025 10:47:44 America/Boise] PHP Warning:  Undefined variable $overall_status in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 121
+[26-Oct-2025 10:47:44 America/Boise] PHP Warning:  Undefined variable $overall_status in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 126
+[26-Oct-2025 10:48:24 America/Boise] PHP Warning:  include(dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 9
+[26-Oct-2025 10:48:24 America/Boise] PHP Warning:  include(): Failed opening 'dbinv.php' for inclusion (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 9
+[26-Oct-2025 10:48:24 America/Boise] PHP Warning:  Undefined variable $conn in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 25
+[26-Oct-2025 10:48:24 America/Boise] PHP Warning:  Undefined variable $overall_status in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 121
+[26-Oct-2025 10:48:24 America/Boise] PHP Warning:  Undefined variable $overall_status in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 126
+[26-Oct-2025 10:48:55 America/Boise] PHP Warning:  include(dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 9
+[26-Oct-2025 10:48:55 America/Boise] PHP Warning:  include(): Failed opening 'dbinv.php' for inclusion (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 9
+[26-Oct-2025 10:48:55 America/Boise] PHP Warning:  Undefined variable $conn in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 25
+[26-Oct-2025 10:48:55 America/Boise] PHP Warning:  Undefined variable $overall_status in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 121
+[26-Oct-2025 10:48:55 America/Boise] PHP Warning:  Undefined variable $overall_status in /home2/xserqhmy/public_html/dev/tools/dis_correct.php on line 126
+[26-Oct-2025 10:51:54 America/Boise] PHP Warning:  require_once(/home2/xserqhmy/public_html/dev/tools/dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 10:51:54 America/Boise] PHP Fatal error:  Uncaught Error: Failed opening required '/home2/xserqhmy/public_html/dev/tools/dbinv.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php:7
+Stack trace:
+#0 {main}
+  thrown in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 10:52:15 America/Boise] PHP Warning:  require_once(/home2/xserqhmy/public_html/dev/tools/dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 10:52:15 America/Boise] PHP Fatal error:  Uncaught Error: Failed opening required '/home2/xserqhmy/public_html/dev/tools/dbinv.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php:7
+Stack trace:
+#0 {main}
+  thrown in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 10:52:27 America/Boise] PHP Warning:  require_once(/home2/xserqhmy/public_html/dev/tools/dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 10:52:27 America/Boise] PHP Fatal error:  Uncaught Error: Failed opening required '/home2/xserqhmy/public_html/dev/tools/dbinv.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php:7
+Stack trace:
+#0 {main}
+  thrown in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 14:59:32 America/Boise] PHP Warning:  require_once(/home2/xserqhmy/public_html/dev/tools/dbinv.php): Failed to open stream: No such file or directory in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7
+[26-Oct-2025 14:59:32 America/Boise] PHP Fatal error:  Uncaught Error: Failed opening required '/home2/xserqhmy/public_html/dev/tools/dbinv.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php:7
+Stack trace:
+#0 {main}
+  thrown in /home2/xserqhmy/public_html/dev/tools/db_structure_dump.php on line 7

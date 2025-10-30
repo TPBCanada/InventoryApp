@@ -1,0 +1,91 @@
+/*
+ * Folder Tab Menu Styles (for whse_sup.php / ai_reports.php)
+ * Applies the folder tab design using global tokens.
+ */
+
+/* --------------------------------------
+   1. FOLDER MENU CONTAINER
+-------------------------------------- */
+
+.folder-menu.tabs-full {
+    display: flex;
+    flex-wrap: nowrap; /* Keep tabs on one row */
+    gap: 0.5rem;
+    align-items: stretch;       
+    width: 100%;
+    margin-bottom: -1px; /* Align content wrapper border exactly with tab base */
+    position: relative;
+    z-index: 100; /* Ensure tabs sit above all page content */
+    /* Add padding to account for the container padding in layout.php */
+    /* If main.container has 10px padding on the sides, this needs adjustment
+       Assuming container is set up correctly, we proceed with base styles */
+}
+
+.folder-menu.tabs-full .folder-tab {
+  /* This setting ensures the folder tab shape is overridden when using tabs-full */
+  clip-path: none !important;
+  flex: 1 1 0;
+  min-width: 0;
+  margin-right: 0; 
+  /* Resetting folder-tab base styles for the new look */
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border); /* Use border from site.css */
+}
+
+
+.folder-menu .tab-link {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-radius: 0.75rem;
+  /* Use tokens from site.css where possible for consistency */
+  border: 1px solid var(--border); 
+  background: var(--surface-2);
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Resetting nav link styles */
+  transition: all var(--transition); 
+}
+
+/* Override the old folder-tab active styles */
+.folder-menu .folder-tab.active {
+    background: transparent;
+    border: none;
+    border-bottom: 0;
+    box-shadow: none;
+    z-index: 101; 
+}
+
+/* Selected tab overrides */
+.folder-menu .folder-tab.active .tab-link {
+  background: var(--brand); /* Use the brand color */
+  color: var(--text-inv); /* Use white/inverse text color */
+  border-color: var(--brand);
+  /* Optional: Keep the bottom edge sharp for the full-width look */
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Hover state for unselected */
+.folder-menu .folder-tab:not(.active) .tab-link:hover {
+  background: color-mix(in srgb, var(--surface-2) 80%, var(--surface));
+  color: var(--text);
+}
+
+/* Actions row under tabs so they never overlap */
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.75rem 0 0.5rem;
+}
+
+/* Ensure button never overlays tabs */
+.actions-row .btn {
+  position: relative;
+  z-index: 0;
+}
