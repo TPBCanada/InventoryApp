@@ -1,0 +1,6 @@
+<Files "config_init.php">
+    Require all denied
+</Files>
+<Files "geofence.json">
+    Require all denied
+</Files>

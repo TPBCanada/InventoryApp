@@ -1,0 +1,207 @@
+<?php
+declare(strict_types=1);
+
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+
+function pickAuditEnsureSpreadsheetLoaded(): void
+{
+    if (class_exists(IOFactory::class)) {
+        return;
+    }
+
+    $candidates = [
+        dirname(__DIR__, 2) . '/vendor/autoload.php',
+        dirname(__DIR__, 3) . '/vendor/autoload.php',
+        dirname(__DIR__) . '/vendor/autoload.php',
+    ];
+
+    foreach ($candidates as $autoload) {
+        if (is_file($autoload)) {
+            require_once $autoload;
+            if (class_exists(IOFactory::class)) {
+                return;
+            }
+        }
+    }
+
+    throw new RuntimeException(
+        'PhpSpreadsheet is not available. Composer autoload could not be found.'
+    );
+}
+
+function pickAuditDisplayCellValue(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell)
+{
+    $value = $cell->getValue();
+
+    if ($cell->getDataType() === DataType::TYPE_FORMULA) {
+        $cached = $cell->getOldCalculatedValue();
+        if ($cached === null) {
+            return (string) $value;
+        }
+        $value = $cached;
+    }
+
+    if ($value === null) {
+        return null;
+    }
+
+    if (is_int($value) || is_float($value)) {
+        try {
+            $formatCode = $cell->getStyle()->getNumberFormat()->getFormatCode();
+            if ($formatCode !== '' && $formatCode !== NumberFormat::FORMAT_GENERAL) {
+                return NumberFormat::toFormattedString($value, $formatCode);
+            }
+        } catch (Throwable $e) {
+        }
+    }
+
+    if (is_bool($value)) {
+        return $value ? 'TRUE' : 'FALSE';
+    }
+
+    return is_scalar($value) ? (string) $value : $value;
+}
+
+function pickAuditSnapshotRowIsBlank(array $cells): bool
+{
+    foreach ($cells as $value) {
+        if ($value !== null && trim((string) $value) !== '') {
+            return false;
+        }
+    }
+    return true;
+}
+
+function pickAuditRecoverSnapshot(array $audit): array
+{
+    $sourcePath = trim((string) ($audit['source_path'] ?? ''));
+    $expectedChecksum = strtolower(trim((string) ($audit['source_checksum'] ?? '')));
+
+    if ($sourcePath === '') {
+        throw new RuntimeException(
+            'No archived spreadsheet path was recorded for this historical import.'
+        );
+    }
+
+    $realPath = realpath($sourcePath);
+    if ($realPath === false || !is_file($realPath) || !is_readable($realPath)) {
+        throw new RuntimeException(
+            'The archived spreadsheet for this historical import is no longer available.'
+        );
+    }
+
+    if ($expectedChecksum === '') {
+        throw new RuntimeException(
+            'This historical import has no recorded checksum, so its archived spreadsheet cannot be verified safely.'
+        );
+    }
+
+    if (!preg_match('/^[a-f0-9]{64}$/', $expectedChecksum)) {
+        throw new RuntimeException('The recorded archive checksum is invalid.');
+    }
+
+    $actualChecksum = hash_file('sha256', $realPath);
+    if ($actualChecksum === false || !hash_equals($expectedChecksum, strtolower($actualChecksum))) {
+        throw new RuntimeException(
+            'The archived spreadsheet does not match the checksum recorded for this import.'
+        );
+    }
+
+    $extension = strtolower(pathinfo($realPath, PATHINFO_EXTENSION));
+    $allowedExtensions = ['xlsx', 'xls', 'xlsm', 'xltx', 'xltm', 'ods', 'csv'];
+    if (!in_array($extension, $allowedExtensions, true)) {
+        throw new RuntimeException(
+            'The archived source type is not supported by the audit viewer.'
+        );
+    }
+
+    pickAuditEnsureSpreadsheetLoaded();
+
+    try {
+        $reader = IOFactory::createReaderForFile($realPath);
+        if (method_exists($reader, 'setReadDataOnly')) {
+            $reader->setReadDataOnly(false);
+        }
+
+        $spreadsheet = $reader->load($realPath);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $highestRow = max(1, (int) $sheet->getHighestDataRow());
+        $highestColumnIndex = max(
+            1,
+            Coordinate::columnIndexFromString($sheet->getHighestDataColumn())
+        );
+
+        $headers = [];
+        for ($column = 1; $column <= $highestColumnIndex; $column++) {
+            $coord = Coordinate::stringFromColumnIndex($column) . '1';
+            $headers[] = pickAuditDisplayCellValue($sheet->getCell($coord));
+        }
+
+        while ($headers !== []) {
+            $lastIndex = count($headers) - 1;
+            if (trim((string) ($headers[$lastIndex] ?? '')) !== '') {
+                break;
+            }
+
+            $columnNumber = $lastIndex + 1;
+            $hasData = false;
+            for ($row = 2; $row <= $highestRow; $row++) {
+                $coord = Coordinate::stringFromColumnIndex($columnNumber) . (string) $row;
+                $value = pickAuditDisplayCellValue($sheet->getCell($coord));
+                if ($value !== null && trim((string) $value) !== '') {
+                    $hasData = true;
+                    break;
+                }
+            }
+
+            if ($hasData) {
+                break;
+            }
+
+            array_pop($headers);
+            $highestColumnIndex--;
+        }
+
+        $rows = [];
+        for ($row = 2; $row <= $highestRow; $row++) {
+            $cells = [];
+            for ($column = 1; $column <= $highestColumnIndex; $column++) {
+                $coord = Coordinate::stringFromColumnIndex($column) . (string) $row;
+                $cells[] = pickAuditDisplayCellValue($sheet->getCell($coord));
+            }
+
+            if (pickAuditSnapshotRowIsBlank($cells)) {
+                continue;
+            }
+
+            $rows[] = [
+                'number' => $row,
+                'cells' => $cells,
+            ];
+        }
+
+        $snapshot = [
+            'kind' => 'worksheet',
+            'sheet' => $sheet->getTitle(),
+            'headers' => $headers,
+            'rows' => $rows,
+        ];
+
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet, $reader);
+
+        return $snapshot;
+    } catch (RuntimeException $e) {
+        throw $e;
+    } catch (Throwable $e) {
+        throw new RuntimeException(
+            'The archived spreadsheet could not be read: ' . $e->getMessage(),
+            0,
+            $e
+        );
+    }
+}

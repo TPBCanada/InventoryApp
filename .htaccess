@@ -1,0 +1,56 @@
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# This domain inherits the “PHP” package.
+# php -- END cPanel-generated handler, do not edit
+
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+
+<IfModule php8_module>
+   php_value session.cookie_secure "1"
+   php_value session.cookie_httponly "1"
+   php_value session.cookie_samesite "Lax"
+   php_value output_buffering On
+   php_flag display_errors Off
+   php_flag log_errors On
+   php_value error_reporting E_ALL
+   php_value max_execution_time 60
+   php_value max_input_time 60
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 516M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php85"
+   php_value upload_max_filesize 512M
+   php_flag zlib.output_compression Off
+   php_value date.timezone "America/New_York"
+</IfModule>
+<IfModule lsapi_module>
+   php_value session.cookie_secure "1"
+   php_value session.cookie_httponly "1"
+   php_value session.cookie_samesite "Lax"
+   php_value output_buffering On
+   php_flag display_errors Off
+   php_flag log_errors On
+   php_value error_reporting E_ALL
+   php_value max_execution_time 60
+   php_value max_input_time 60
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 516M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php85"
+   php_value upload_max_filesize 512M
+   php_flag zlib.output_compression Off
+   php_value date.timezone "America/New_York"
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# Custom security headers
+# <IfModule mod_headers.c>
+#     Header always set X-Frame-Options "SAMEORIGIN"
+#     Header always set Content-Security-Policy "default-src 'self'; object-src 'none'; frame-ancestors 'self'; base-uri 'self';"
+# </IfModule>

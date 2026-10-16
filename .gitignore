@@ -1,0 +1,51 @@
+# Dependencies
+vendor/
+
+# Database credentials & secrets
+dbinv.php
+dbusers.php
+config_init.php
+*/config_init.php
+
+# SFTP config
+sftp.json
+
+# Backups
+*.bak_*
+
+# Logs
+error.log
+error_log
+
+# Server files
+.ftpquota
+.user.ini
+php.ini
+acme-challenge/
+cgi-bin/
+website_6d137498/
+
+# Logs
+*.log
+*.jsonl
+inventory/logs/
+inventory/utils/logs/
+
+# Runtime data / snapshots
+inventory/utils/google_drive_picks/snapshots/
+utils/timeoff_store.json
+utils/geofence.json
+query.txt
+
+# Nested repo
+repositories/
+
+# Composer binary
+inventory/composer.phar
+
+# Editor swap files
+*.swo
+*.swp
+
+# VS Code
+.vscode/

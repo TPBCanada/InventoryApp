@@ -1,0 +1,63 @@
+.page-inspection-checklist main {
+    padding-bottom: 4rem;
+}
+
+.page-inspection-checklist h2 {
+    margin-top: 0;
+}
+
+.page-inspection-checklist .card {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+}
+
+.page-inspection-checklist .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 2rem;
+}
+
+.page-inspection-checklist .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.page-inspection-checklist .checklist li:last-child {
+    border-bottom: none;
+}
+
+.page-inspection-checklist .checklist input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+
+.page-inspection-checklist .checklist label {
+    cursor: pointer;
+}
+
+.page-inspection-checklist .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.page-inspection-checklist .status-pill {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: #f5f5f5;
+    color: #555;
+}
+
+@media (max-width: 600px) {
+    .page-inspection-checklist .card {
+        margin-inline: 0.5rem;
+    }
+}

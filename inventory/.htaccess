@@ -1,0 +1,14 @@
+# 1. FORCE BLUEHOST/NGINX TO BYPASS CACHE FOR INVENTORY
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+    
+    # Specific header Bluehost uses to track edge cache states
+    Header set x-ac "BYPASS"
+</IfModule>
+
+# 2. FIX TABLET/MOBILE 302 REDIRECT FIGHTS
+RewriteEngine On
+# If your inventory code has internal redirects, this ensures it knows it is on HTTPS
+SetEnvIf X-Forwarded-Proto "https" HTTPS=on

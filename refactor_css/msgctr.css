@@ -1,0 +1,379 @@
+/* =========================================================
+   MESSAGE CENTER
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   FLOATING BUTTON STACK
+   Calculator above Message Center
+   --------------------------------------------------------- */
+
+/*
+ * More specific than the .calc-fab rule later in site.css,
+ * so this remains effective even though msgctr.css is
+ * imported near the top of site.css.
+ */
+body .calc-fab {
+  left: 0;
+  bottom: 140px;
+}
+
+
+/* Message Center button */
+
+body .message-fab {
+  position: fixed;
+  left: 0;
+  bottom: 78px;
+  z-index: 2400;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  min-height: 50px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  color: var(--text, #1f2937);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .22);
+  cursor: pointer;
+  transform: translateX(5%);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    opacity .15s ease;
+}
+
+body .message-fab:hover {
+  transform: translateX(5%) translateY(-1px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .28);
+}
+
+body .message-fab:active {
+  transform: translateX(5%) translateY(0);
+}
+
+body .message-fab:focus-visible {
+  outline: 3px solid rgba(13, 202, 240, .6);
+  outline-offset: 2px;
+}
+
+/* Main number */
+
+.message-fab__count {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+
+/* New message notification */
+
+.message-fab__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface, #fff);
+  border-radius: 999px;
+  background: var(--brand, #0dcaf0);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+
+.message-fab__badge[hidden] {
+  display: none;
+}
+
+
+
+/* =========================================================
+   MESSAGE CENTER DRAWER
+   ========================================================= */
+
+.message-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  pointer-events: none;
+}
+
+/* Closed */
+
+.message-drawer[aria-hidden="true"] {
+  display: none;
+}
+
+/* Open */
+
+.message-drawer[aria-hidden="false"] {
+  display: block;
+  pointer-events: auto;
+}
+
+/* ---------------------------------------------------------
+   BACKDROP
+   --------------------------------------------------------- */
+
+.message-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(15, 23, 42, .20);
+  cursor: default;
+  z-index: 1;
+}
+
+/* ---------------------------------------------------------
+   WINDOW
+   --------------------------------------------------------- */
+
+.message-drawer__panel {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2;
+  width: min(380px, calc(100vw - 24px));
+  height: min(600px, calc(100vh - 40px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border, #d7dee8);
+  border-radius: 22px;
+  background: var(--surface-2, #f8fafc);
+  color: var(--text, #0f172a);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .30);
+}
+
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
+
+.message-drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+
+.message-drawer__eyebrow {
+  margin: 0 0 3px;
+  color: #0f8a73;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .09em;
+}
+
+
+.message-drawer__header h2 {
+  margin: 0 0 4px;
+  color: var(--text, #0f172a);
+  font-size: 1.1rem;
+}
+
+
+.message-drawer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--text-muted, #64748b);
+  font-size: .78rem;
+}
+
+.message-drawer__close {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border, #d7dee8);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text, #334155);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+.message-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.message-drawer__status {
+  padding: 24px 12px;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  font-size: .88rem;
+}
+
+
+/* =========================================================
+   MESSAGE LIST
+   ========================================================= */
+
+#messageList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+.message-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 12px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid var(--border, #dbe3ec);
+  border-radius: 13px;
+  background: var(--surface, #fff);
+}
+
+
+.message-card__content {
+  min-width: 0;
+}
+
+
+.message-card__date {
+  margin-bottom: 4px;
+  color: var(--text-muted, #64748b);
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+
+.message-card__text {
+  color: var(--text, #0f172a);
+  font-size: .9rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+
+/* Complete message */
+
+.message-card__done {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: #0f8a73;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+
+.message-card__done:hover {
+  filter: brightness(.94);
+}
+
+.message-drawer__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.message-drawer__tab {
+    min-height: 38px;
+    border: 1px solid #d7dee8;
+    border-radius: 9px;
+    background: #fff;
+    color: #64748b;
+    font-size: .78rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.message-drawer__tab.is-active {
+    border-color: #0f8a73;
+    color: #0f8a73;
+    background: #edf9f6;
+}
+
+.message-card--read {
+    opacity: .8;
+}
+
+.message-card__read-date {
+    margin-top: 6px;
+    color: #64748b;
+    font-size: .72rem;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 960px) {
+
+  /*
+   * site.css already switches to the mobile FAB menu at this
+   * breakpoint. Hide the standalone Message Center button too.
+   */
+
+  body .message-fab {
+    display: none !important;
+  }
+}
+
+
+@media (max-width: 640px) {
+
+  .message-drawer__panel {
+    right: 8px;
+    bottom: 8px;
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
+    border-radius: 18px;
+  }
+}
+
+/* Print */
+
+@media print {
+
+  .message-fab,
+  .message-drawer {
+    display: none !important;
+  }
+}
+
+

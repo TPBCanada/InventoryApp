@@ -1,0 +1,327 @@
+/* ---------------------------------------------------------
+   --- Large Data Modals (Used in Import Wizard) ---
+--------------------------------------------------------- */
+/* Scoped to #import-preview-modal to ensure no leaking */
+#import-preview-modal.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 95%;
+    max-width: 1200px; /* Keeps it wide for data tables */
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    background: white;
+}
+
+/* ---------------------------------------------------------
+   --- Confirmation/Standard Modals  ---
+--------------------------------------------------------- */
+/* Scoped using the specific ID from your second screenshot */
+#transferConfirmModal .modal__dialog {
+    position: relative;
+    z-index: 1001;
+    width: 100%;
+    max-width: 450px; /* Smaller, focused width */
+    margin: auto;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal-backdrop, .modal__backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+}
+
+
+/* Modal styles (aligned with refactor_css/modal.css patterns) */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal__backdrop,
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+.modal__dialog {
+  position: relative;
+  z-index: 1001;
+  width: min(520px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.modal__close {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+}
+.modal__close:hover {
+  color: #111827;
+}
+
+/* ---------------------------------------------------------
+/* ----- Status Modal container + backdrop (Retained) ----- */
+--------------------------------------------------------- */
+
+
+.status-modal {
+ position: fixed;
+ inset: 0;
+ z-index: 9999;
+ display: none;
+ align-items: center;
+ justify-content: center;
+ padding: 1.5rem;
+}
+
+.status-modal--visible {
+ display: flex;
+}
+
+.status-modal__backdrop {
+ position: absolute;
+ inset: 0;
+ background: rgba(15, 23, 42, 0.65);
+ backdrop-filter: blur(2px);
+}
+
+.status-modal__dialog {
+ position: relative;
+ max-width: 520px;
+ width: 100%;
+ padding: 1.75rem 1.75rem 1.5rem;
+ border-radius: 1rem;
+ box-shadow: 0 22px 45px rgba(15, 23, 42, 0.35);
+ border: 2px solid transparent;
+ display: grid;
+ grid-template-columns: auto 1fr;
+ grid-template-rows: auto auto;
+ grid-template-areas:
+  "icon content"
+  "icon actions";
+ column-gap: 1rem;
+ row-gap: 1rem;
+ animation: status-modal-drop 0.25s ease-out;
+ box-sizing: border-box;
+}
+
+.status-modal__dialog--success {
+ background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+ border-color: #16a34a;
+ color: #064e3b;
+}
+
+.status-modal__dialog--error {
+ background: linear-gradient(135deg, #fee2e2, #fecaca);
+ border-color: #dc2626;
+ color: #7f1d1d;
+}
+
+.status-modal__dialog--warning {
+ background: linear-gradient(135deg, #fef9c3, #fef08a);
+ border-color: #eab308;
+ color: #713f12;
+}
+
+.status-modal__dialog--info {
+ background: #eff6ff;
+ border-color: #2563eb;
+ color: #1e3a8a;
+}
+
+.status-modal__icon {
+ grid-area: icon;
+ align-self: flex-start;
+ width: 2.75rem;
+ height: 2.75rem;
+ border-radius: 999px;
+ box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+}
+
+.status-modal__dialog--success .status-modal__icon {
+ background: #16a34a;
+}
+
+.status-modal__dialog--error .status-modal__icon {
+ background: #dc2626;
+}
+
+.status-modal__dialog--warning .status-modal__icon {
+ background: #eab308;
+}
+
+.status-modal__dialog--info .status-modal__icon {
+ background: #2563eb;
+}
+
+.status-modal__content {
+ grid-area: content;
+}
+
+.status-modal__content h3 {
+ margin: 0 0 0.25rem;
+ font-size: 1.3rem;
+ font-weight: 700;
+}
+
+.status-modal__content p {
+ margin: 0;
+ font-size: 1rem;
+ line-height: 1.5;
+}
+
+.status-modal__actions {
+ grid-area: actions;
+ display: flex;
+ justify-content: flex-end;
+ gap: 0.75rem;
+}
+
+.status-modal__close {
+ position: absolute;
+ top: 0.6rem;
+ right: 0.8rem;
+ border: none;
+ background: transparent;
+ font-size: 1.6rem;
+ line-height: 1;
+ cursor: pointer;
+ color: inherit;
+ opacity: 0.8;
+}
+
+.status-modal__close:hover {
+ opacity: 1;
+}
+
+@keyframes status-modal-drop {
+ from {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.97);
+ }
+ to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+ }
+}
+
+/* ---------------------------------------------------------
+   --- NEW FEATURES MODAL ---
+--------------------------------------------------------- */
+
+/* "fd" stands for Feature Discovery */
+.fd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0; /* Shorthand for top/bottom/left/right: 0 */
+  background: rgba(15, 23, 42, 0.85); /* Slightly darker, modern slate */
+  backdrop-filter: blur(4px); /* Blurs the background page */
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.fd-card {
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.fd-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+.fd-title { color: #1e293b; margin-bottom: 0.5rem; }
+
+.fd-list {
+  text-align: left;
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fd-list li {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.fd-list li::before {
+  content: "✅";
+  position: absolute;
+  left: 0;
+}
+
+.fd-primary-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #6366f1; /* Modern Indigo */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.fd-primary-btn:hover { background-color: #4f46e5; transform: translateY(-1px); }
+
+.fd-scroll-area {
+  max-height: 350px;
+  overflow-y: auto;
+  text-align: left;
+  margin: 1rem 0;
+  padding-right: 10px;
+}
+
+.fd-section h3 {
+  font-size: 1rem;
+  color: #4f46e5;
+  margin-top: 1.2rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 4px;
+}
+
+/* Custom Scrollbar for a cleaner look */
+.fd-scroll-area::-webkit-scrollbar { width: 6px; }
+.fd-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }

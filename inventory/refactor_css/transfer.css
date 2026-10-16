@@ -1,0 +1,148 @@
+/* Transfer page specific tweaks (mobile-friendly side-by-side controls) */
+
+#transferShell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#transferShell .grid-2col {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+ 
+#transferShell .grid-2col fieldset,
+#transferShell .grid-2col > div {
+  flex: 1 1 420px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand, #0f766e) 6%, var(--surface, #fff)), var(--surface, #fff));
+  border: 1px solid var(--border, #d7e0ec);
+  box-shadow: var(--shadow, 0 18px 40px rgba(7, 15, 35, 0.12));
+}
+
+#transferShell .grid-2col legend {
+  font-weight: 700;
+  color: var(--inv-ink, #0b132b);
+}
+
+#transferShell .grid.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+#transferShell .grid.grid-4 > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#transferShell .grid.grid-4 label {
+  font-weight: 600;
+  color: var(--text-muted, #556079);
+}
+
+#transferShell .grid.grid-4 select {
+  min-height: 38px;
+  padding: 10px 12px;
+}
+
+#transferShell .results {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #d7e0ec);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 10px 22px rgba(12, 18, 34, 0.08);
+}
+
+#transferShell table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Destination table should mirror source table layout */
+#transferShell #dstTable.table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+#transferShell #dstTable.table thead th,
+#transferShell #dstTable.table tbody td,
+#transferShell #srcTable.table thead th,
+#transferShell #srcTable.table tbody td {
+  padding: 8px 10px;
+  text-align: center;
+}
+
+#transferShell thead th {
+  background: color-mix(in srgb, var(--brand, #0f766e) 8%, var(--surface-2, #f7fafc));
+  color: var(--inv-ink, #0b132b);
+  font-size: 0.9rem;
+  min-height: 40px;
+  height: 80px;
+  
+}
+
+#transferShell tbody td {
+  font-size: 0.9rem;
+}
+
+#transferShell .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+/* After-transfer summary: keep source/destination side-by-side on phones */
+#transferShell .grid-2col.summary {
+  gap: 12px;
+}
+
+#transferShell .grid-2col.summary > div {
+  flex: 1 1 320px;
+  min-width: 240px;
+}
+
+#transferShell .grid-2col.summary h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#transferShell .grid-2col.summary table {
+  margin-top: 8px;
+}
+
+/* Mobile optimizations: force two-up inputs when space allows */
+@media (max-width: 720px) {
+  #transferShell .grid.grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #transferShell .grid-2col fieldset,
+  #transferShell .grid-2col > div {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  #transferShell .grid.grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #transferShell thead th,
+  #transferShell tbody td {
+    font-size: 0.85rem;
+  }
+}

@@ -1,0 +1,351 @@
+/* Punch clock: FAB + modal. Matches cal-modal patterns in calendar.css. */
+
+.punch-fab {
+  position: fixed;
+  right: 24px;
+  top: max(72px, calc(25% - 72px)); /* above the portal badge (top: 25%), min 72px clears the navbar */
+  bottom: auto;
+  z-index: 1201;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 20px 0 16px;
+  border: 1px solid #dbe4f0;
+  border-radius: 28px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.punch-fab:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22); }
+.punch-fab:focus-visible { outline: 3px solid #0c8ddf; outline-offset: 3px; }
+
+.punch-fab__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #94a3b8;
+  box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.2);
+}
+.punch-fab.is-in .punch-fab__dot { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.22); }
+.punch-fab.is-in { border-color: rgba(34, 197, 94, 0.45); }
+.punch-fab__timer { font-variant-numeric: tabular-nums; color: #166534; }
+.punch-fab:not(.is-in) .punch-fab__timer { display: none; }
+
+/* Modal */
+.punch-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1215;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 160ms ease, visibility 160ms ease;
+}
+.punch-modal.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
+
+.punch-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.punch-modal__dialog {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: min(86vh, 720px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #dbe4f0;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.24);
+  transform: translateY(8px);
+  transition: transform 160ms ease;
+}
+.punch-modal.is-open .punch-modal__dialog { transform: none; }
+
+.punch-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid #e3e8f1;
+}
+.punch-modal__header h3 { margin: 0; font-size: 18px; color: #0f172a; }
+.punch-modal__header p { margin: 4px 0 0; color: #64748b; font-size: 14px; }
+
+.punch-modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.punch-modal__body { overflow-y: auto; padding: 20px; display: grid; gap: 20px; }
+
+/* Status + clock */
+.punch-status { text-align: center; }
+.punch-status__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #eef3f9;
+  color: #475569;
+}
+.punch-status__state::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.is-in .punch-status__state { background: #dcfce7; color: #166534; }
+
+.punch-status__clock {
+  margin: 12px 0 2px;
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.punch-status__since { margin: 0; color: #64748b; font-size: 14px; }
+
+.punch-action {
+  width: 100%;
+  min-height: 60px;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  background: #16a34a;
+  cursor: pointer;
+  transition: background 140ms ease, transform 80ms ease;
+}
+.punch-action:hover { background: #15803d; }
+.punch-action:active { transform: scale(0.99); }
+.punch-action:focus-visible { outline: 3px solid #0c8ddf; outline-offset: 3px; }
+.punch-action:disabled { opacity: 0.6; cursor: wait; }
+.is-in .punch-action { background: #dc2626; }
+.is-in .punch-action:hover { background: #b91c1c; }
+
+.punch-msg { margin: -8px 0 0; font-size: 14px; text-align: center; min-height: 1.2em; }
+.punch-msg.is-error { color: #b91c1c; }
+.punch-msg.is-ok { color: #166534; }
+
+/* Summary */
+.punch-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.punch-summary__item {
+  padding: 12px;
+  border: 1px solid #e3e8f1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.punch-summary__value { font-size: 20px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; }
+.punch-summary__label { font-size: 13px; color: #64748b; }
+
+.punch-log h4 { margin: 0 0 8px; font-size: 14px; color: #334155; }
+.punch-log ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.punch-log li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.punch-log li span:last-child { color: #64748b; }
+.punch-log__empty { color: #64748b; font-size: 14px; margin: 0; }
+
+@media (max-width: 720px) {
+  .punch-fab { right: 16px; top: max(72px, calc(25% - 62px)); height: 52px; padding: 0 16px 0 14px; }
+  .punch-fab__label { display: none; }
+  .punch-modal { align-items: flex-end; padding: 0; }
+  .punch-modal__dialog { width: 100%; border-radius: 18px 18px 0 0; max-height: 92vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punch-fab, .punch-modal, .punch-modal__dialog, .punch-action { transition: none; }
+}
+
+/* PIN screen */
+
+.punch-pin__hint {
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.punch-pin__inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.punch-pin__digit {
+  width: 56px;
+  height: 60px;
+  border: 2px solid #cfd8e4;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+.punch-pin__digit:focus {
+  border-color: #0c8ddf;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(12, 141, 223, 0.12);
+}
+
+.punch-pin__digit.is-filled { border-color: #22c55e; }
+
+.punch-pin__digit.is-error {
+  border-color: #dc2626;
+  background: #fff5f5;
+  animation: pinShake 300ms ease;
+}
+
+.punch-pin__error {
+  text-align: center;
+  color: #dc2626;
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.punch-pin__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.punch-pin__actions .punch-action { flex: 1; }
+
+.punch-action--secondary,
+.is-in .punch-action--secondary { background: #eef3f9; color: #334155; }
+.punch-action--secondary:hover,
+.is-in .punch-action--secondary:hover { background: #e2e8f0; }
+
+/* Change PIN modal (templates/navbar.php) */
+
+.punch-pin__field { display: grid; gap: 8px; }
+
+.punch-pin__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.punch-pin__field .punch-pin__hint { text-align: left; margin: 0; font-size: 13px; }
+.punch-pin__field .punch-pin__inputs { justify-content: flex-start; margin-bottom: 0; }
+
+.punch-pin__text {
+  height: 48px;
+  padding: 0 14px;
+  border: 2px solid #cfd8e4;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+.punch-pin__text:focus {
+  border-color: #0c8ddf;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(12, 141, 223, 0.12);
+}
+
+@keyframes pinShake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
+}
+/* Forgot-to-punch-out banner (templates/punch_clock.php, js/punch-clock.js) */
+
+.punch-late {
+  position: fixed;
+  left: 50%;
+  top: 72px;
+  transform: translateX(-50%);
+  z-index: 1205;
+  width: min(560px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 12px 18px;
+  border: 1px solid #fcd34d;
+  border-radius: 14px;
+  background: #fffbeb;
+  color: #78350f;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
+.punch-late[hidden] { display: none; }
+.punch-late__text { margin: 0; flex: 1; font-size: 14px; line-height: 1.4; }
+.punch-late__text strong { display: block; font-size: 15px; color: #78350f; }
+.punch-late__actions { display: flex; gap: 8px; flex-shrink: 0; }
+.punch-late__btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  background: #fff;
+  color: #78350f;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.punch-late__btn--primary { border-color: #dc2626; background: #dc2626; color: #fff; }
+.punch-late__btn--primary:hover { background: #b91c1c; }
+.punch-late__btn:disabled { opacity: 0.6; cursor: wait; }
+
+/* FAB pulses while the punch is overdue */
+.punch-fab.is-late { border-color: #f59e0b; animation: punchLatePulse 1.6s ease-in-out infinite; }
+.punch-fab.is-late .punch-fab__dot { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25); }
+@keyframes punchLatePulse {
+  0%, 100% { box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18), 0 0 0 0 rgba(245, 158, 11, 0.45); }
+  50%      { box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18), 0 0 0 10px rgba(245, 158, 11, 0); }
+}
+
+@media (max-width: 720px) {
+  .punch-late { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); flex-direction: column; align-items: stretch; }
+  .punch-late__actions .punch-late__btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punch-fab.is-late { animation: none; }
+}

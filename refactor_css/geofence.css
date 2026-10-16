@@ -1,0 +1,119 @@
+/* geofence.css — geofence.php (punch-in geofence editor) */
+
+.gf {
+  display: grid;
+  gap: 16px;
+}
+
+.gf__head h2 {
+  margin: 0 0 4px;
+}
+
+.gf__sub {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.gf__flash {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm, 8px);
+  font-size: .9rem;
+}
+
+.gf__flash--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.gf__flash--error {
+  background: color-mix(in srgb, var(--danger, #dc2626) 12%, transparent);
+  color: var(--danger, #dc2626);
+}
+
+.gf__flash--warn {
+  background: #fff7e6;
+  color: #92400e;
+}
+
+.gf__search {
+  display: flex;
+  gap: 8px;
+}
+
+.gf__search input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.gf__map {
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface-2);
+}
+
+.gf__map-msg {
+  margin: -8px 0 0;
+  color: var(--text-muted);
+  font-size: .875rem;
+}
+
+.gf__form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gf__form label {
+  display: grid;
+  gap: 4px;
+  font-size: .875rem;
+  color: var(--text-muted);
+}
+
+.gf__form input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.gf__wide {
+  grid-column: 1 / -1;
+}
+
+.gf__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.gf__spacer {
+  flex: 1;
+}
+
+.gf__meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: .8rem;
+}
+
+@media (max-width: 640px) {
+  .gf__form {
+    grid-template-columns: 1fr;
+  }
+
+  .gf__map {
+    height: 320px;
+  }
+}

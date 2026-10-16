@@ -1,0 +1,708 @@
+/* ==========================================================================
+   Barcode Management Page Styles
+   ========================================================================== */
+
+.page-manage-barcodes {
+  --bc-brand: #0f766e;
+  --bc-brand-light: #14b8a6;
+  --bc-surface: #ffffff;
+  --bc-surface-hover: #f0fdf4;
+  --bc-border: #e2e8f0;
+  --bc-text: #1f2937;
+  --bc-text-muted: #6b7280;
+  --bc-badge-active: #22c55e;
+  --bc-badge-inactive: #9ca3af;
+  --bc-badge-bg-active: #dcfce7;
+  --bc-badge-bg-inactive: #f3f4f6;
+}
+
+/* ---------- Page Container ---------- */
+
+.page-manage-barcodes section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ---------- Header ---------- */
+
+.page-manage-barcodes .sku-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--bc-border);
+}
+
+.page-manage-barcodes .sku-title {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--bc-text);
+}
+
+/* ---------- Toolbar / Search Form ---------- */
+
+.page-manage-barcodes .sku-toolbar {
+  background: var(--bc-surface);
+  border: 1px solid var(--bc-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.page-manage-barcodes .sku-toolbar .form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-manage-barcodes .sku-toolbar .select,
+.page-manage-barcodes .sku-toolbar .input {
+  border: 1px solid var(--bc-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--bc-surface);
+  color: var(--bc-text);
+  font-size: 0.95rem;
+}
+
+.page-manage-barcodes .sku-toolbar .select:focus,
+.page-manage-barcodes .sku-toolbar .input:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-color: var(--bc-brand);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.page-manage-barcodes .sku-toolbar .bc-filter {
+  min-width: 140px;
+}
+
+.page-manage-barcodes .sku-toolbar .input[type="text"] {
+  flex: 1;
+  min-width: 260px;
+}
+
+.page-manage-barcodes .sku-toolbar .btn--primary {
+  background: linear-gradient(135deg, var(--bc-brand), #0d9488);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+}
+
+.page-manage-barcodes .sku-toolbar .btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.3);
+}
+
+.page-manage-barcodes .sku-toolbar .clear-search-link {
+  background: rgba(15, 118, 110, 0.1);
+  border: 1px solid var(--bc-border);
+  color: var(--bc-brand);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-manage-barcodes .sku-toolbar .clear-search-link:hover {
+  background: rgba(15, 118, 110, 0.2);
+  border-color: var(--bc-brand);
+}
+
+.page-manage-barcodes .sku-meta {
+  margin-top: 12px;
+  color: var(--bc-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- SKU Groups Container ---------- */
+
+.page-manage-barcodes .bc-sku-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.page-manage-barcodes .bc-sku-group {
+  background: var(--bc-surface);
+  border: 1px solid var(--bc-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease;
+}
+
+.page-manage-barcodes .bc-sku-group:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* SKU Group Header / Toggle */
+
+.page-manage-barcodes .bc-sku-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 118, 110, 0.08),
+    rgba(15, 118, 110, 0.04)
+  );
+  border-bottom: 1px solid var(--bc-border);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.page-manage-barcodes .bc-sku-header:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 118, 110, 0.12),
+    rgba(15, 118, 110, 0.08)
+  );
+}
+
+.page-manage-barcodes .bc-sku-header__main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.page-manage-barcodes .bc-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  border-radius: 4px;
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--bc-brand);
+  font-weight: bold;
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.page-manage-barcodes .bc-sku-header__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--bc-text);
+}
+
+.page-manage-barcodes .bc-sku-header__desc {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--bc-text-muted);
+}
+
+.page-manage-barcodes .bc-sku-header__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: fit-content;
+  color: var(--bc-text-muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Barcode Content (Collapsible) */
+
+.page-manage-barcodes .bc-barcodes {
+  display: none;
+  padding: 0;
+}
+
+.page-manage-barcodes .bc-barcodes.is-open {
+  display: block;
+}
+
+/* Empty State */
+
+.page-manage-barcodes .bc-empty-state {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.page-manage-barcodes .bc-empty-state p {
+  margin: 0 0 12px;
+  color: var(--bc-text-muted);
+}
+
+.page-manage-barcodes .bc-add-barcode-btn {
+  background: linear-gradient(135deg, var(--bc-brand), #0d9488);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15);
+}
+
+.page-manage-barcodes .bc-add-barcode-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+}
+
+/* Group Footer */
+
+.page-manage-barcodes .bc-group-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--bc-border);
+  background: rgba(15, 118, 110, 0.02);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Table Container */
+
+.page-manage-barcodes .bc-barcode-table-wrap {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.page-manage-barcodes .sku-list .table-wrap {
+  overflow-x: auto;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
+.page-manage-barcodes .bc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+/* ---------- Table Header ---------- */
+
+.page-manage-barcodes .bc-table thead {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 118, 110, 0.1),
+    rgba(15, 118, 110, 0.05)
+  );
+  border-bottom: 1px solid var(--bc-border);
+}
+
+.page-manage-barcodes .bc-table thead tr {
+  display: table-row;
+}
+
+.page-manage-barcodes .bc-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6b7280;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--bc-border);
+}
+
+/* ---------- Table Body Rows ---------- */
+
+.page-manage-barcodes .bc-table tbody tr {
+  display: table-row;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.page-manage-barcodes .bc-table tbody tr:hover {
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.page-manage-barcodes .bc-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.page-manage-barcodes .bc-table td {
+  padding: 10px 14px;
+  color: var(--bc-text);
+  background: transparent;
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+.page-manage-barcodes .editable-row:hover td {
+  background: rgba(15, 118, 110, 0.04);
+}
+
+/* ---------- Row Styling - NO_BARCODE State ---------- */
+
+.page-manage-barcodes .bc-row--none {
+  opacity: 0.7;
+}
+
+.page-manage-barcodes .bc-row--none td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* ---------- Input Fields in Table ---------- */
+
+.page-manage-barcodes .bc-table input,
+.page-manage-barcodes .bc-table select {
+  width: 100%;
+  border: 1px solid var(--bc-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--bc-surface);
+  color: var(--bc-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.page-manage-barcodes .bc-table input:focus,
+.page-manage-barcodes .bc-table select:focus {
+  outline: none;
+  border-color: var(--bc-brand);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+  background: var(--bc-surface);
+}
+
+.page-manage-barcodes .bc-table input:disabled {
+  background: #f3f4f6;
+  color: var(--bc-text-muted);
+  cursor: not-allowed;
+}
+
+/* ---------- Status Badge ---------- */
+
+.page-manage-barcodes .bc-status {
+  min-width: 120px;
+}
+
+/* Status badge styling (optional if we use a display version) */
+
+.page-manage-barcodes .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.page-manage-barcodes .status-badge.active {
+  background: var(--bc-badge-bg-active);
+  color: var(--bc-badge-active);
+}
+
+.page-manage-barcodes .status-badge.inactive {
+  background: var(--bc-badge-bg-inactive);
+  color: var(--bc-badge-inactive);
+}
+
+/* ---------- UPC Field Styling ---------- */
+
+.page-manage-barcodes .bc-upc {
+  font-family: "Courier New", monospace;
+  font-size: 0.88rem;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- Multiplier Input ---------- */
+
+.page-manage-barcodes .bc-num {
+  max-width: 80px;
+  text-align: center;
+}
+
+/* ---------- Description Text ---------- */
+
+.page-manage-barcodes .bc-desc {
+  display: block;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--bc-text-muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+/* ---------- Action Buttons / Forms ---------- */
+
+.page-manage-barcodes .row-action-form {
+  display: flex !important;
+  gap: 6px;
+  align-items: center;
+}
+
+.page-manage-barcodes .row-action-form .btn,
+.page-manage-barcodes .row-action-form .link-danger {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-manage-barcodes .row-action-form .update-btn {
+  background: linear-gradient(135deg, var(--bc-brand), #0d9488);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.2);
+}
+
+.page-manage-barcodes .row-action-form .update-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.3);
+}
+
+.page-manage-barcodes .row-action-form .delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+.page-manage-barcodes .row-action-form .delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(220, 38, 38, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ---------- Pagination ---------- */
+
+.page-manage-barcodes nav {
+  display: flex !important;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 0 16px 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+.page-manage-barcodes nav .btn {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--bc-border);
+  background: var(--bc-surface);
+  color: var(--bc-brand);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-manage-barcodes nav .btn:hover:not(.disabled) {
+  border-color: var(--bc-brand);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.page-manage-barcodes nav .btn--primary {
+  background: var(--bc-brand);
+  color: white;
+  border-color: var(--bc-brand);
+}
+
+.page-manage-barcodes nav .btn--primary:hover {
+  background: #0d9488;
+  border-color: #0d9488;
+}
+
+.page-manage-barcodes nav .btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #999;
+}
+
+.page-manage-barcodes nav span.small {
+  color: var(--bc-text-muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Info Text ---------- */
+
+.page-manage-barcodes .small {
+  color: var(--bc-text-muted);
+  font-size: 0.85rem;
+}
+
+.page-manage-barcodes p.small {
+  margin: 10px 0 0;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  color: var(--bc-text-muted);
+}
+
+/* ---------- Flash Messages ---------- */
+
+.page-manage-barcodes .message {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid var(--bc-border);
+  background: #f8fafc;
+  color: var(--bc-text);
+}
+
+.page-manage-barcodes .message--good {
+  border-left-color: var(--bc-badge-active);
+  background: var(--bc-badge-bg-active);
+  color: var(--bc-badge-active);
+}
+
+.page-manage-barcodes .message--bad {
+  border-left-color: #ef4444;
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.page-manage-barcodes .message--warning {
+  border-left-color: #f59e0b;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.page-manage-barcodes .message-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.page-manage-barcodes .message-close:hover {
+  opacity: 1;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1024px) {
+  .page-manage-barcodes section {
+    padding: 16px;
+  }
+
+  .page-manage-barcodes .sku-toolbar .form {
+    gap: 8px;
+  }
+
+  .page-manage-barcodes .bc-filter {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-manage-barcodes .sku-title {
+    font-size: 1.5rem;
+  }
+
+  .page-manage-barcodes .sku-toolbar .form {
+    flex-direction: column;
+  }
+
+  .page-manage-barcodes .sku-toolbar .select,
+  .page-manage-barcodes .sku-toolbar .input,
+  .page-manage-barcodes .sku-toolbar .btn {
+    width: 100%;
+  }
+
+  .page-manage-barcodes .bc-table {
+    min-width: 800px;
+  }
+
+  .page-manage-barcodes .bc-barcode-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .page-manage-barcodes .bc-desc {
+    max-width: 150px;
+  }
+
+  .page-manage-barcodes .row-action-form {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .page-manage-barcodes .row-action-form .btn,
+  .page-manage-barcodes .row-action-form .link-danger {
+    width: 100%;
+    min-height: 36px;
+  }
+
+  .page-manage-barcodes .bc-sku-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-manage-barcodes .bc-sku-header__info {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-manage-barcodes section {
+    padding: 12px;
+  }
+
+  .page-manage-barcodes .sku-title {
+    font-size: 1.25rem;
+  }
+
+  .page-manage-barcodes .sku-toolbar {
+    padding: 12px;
+  }
+
+  .page-manage-barcodes .bc-table th {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .page-manage-barcodes .bc-table td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .page-manage-barcodes .bc-desc {
+    display: none;
+  }
+
+  .page-manage-barcodes .row-action-form {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .page-manage-barcodes .row-action-form .btn,
+  .page-manage-barcodes .row-action-form .link-danger {
+    width: auto;
+    flex: 1;
+    min-width: 40px;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+  }
+}

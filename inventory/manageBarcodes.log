@@ -1,0 +1,5 @@
+[01-Oct-2026 10:59:00 America/New_York] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home2/xserqhmy/public_html/dev/inventory/manage_barcode.php:396
+Stack trace:
+#0 /home2/xserqhmy/public_html/dev/inventory/manage_barcode.php(396): mysqli_stmt->bind_param('isisis i', 1, 'CARTON', 1, NULL, NULL, 1, 1)
+#1 {main}
+  thrown in /home2/xserqhmy/public_html/dev/inventory/manage_barcode.php on line 396

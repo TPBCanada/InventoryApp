@@ -1,0 +1,43 @@
+
+/* Scoped to inventory autosuggest only */
+.inv-suggest {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: min(480px, 100%) !important;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  padding: 4px 0;
+  z-index: 30;
+}
+.inv-suggest .suggest-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  padding: 6px 10px 2px;
+}
+.inv-suggest .suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.inv-suggest .suggest-item:hover,
+.inv-suggest .suggest-item.active {
+  background: #f1f5f9;
+}
+.inv-suggest .sku-chip,
+.inv-suggest .loc-chip {
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: #0f172a;
+}
+.inv-suggest.ac-list { /* legacy class used by this page */
+  min-width: 480px;
+}

@@ -1,0 +1,8 @@
+##purge the duplicate rows created today while keeping the original rows intact,
+
+DELETE p1 FROM `pick_items` p1
+INNER JOIN `pick_items` p2 
+    ON p1.`order_id` = p2.`order_id` 
+    AND p1.`sku_id` = p2.`sku_id`
+WHERE p1.`created_at` >= CURDATE()  -- Target today's bad data
+  AND p1.`id` > p2.`id`;            -- Keep the older original row (lower ID)

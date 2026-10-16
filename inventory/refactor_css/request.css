@@ -1,0 +1,245 @@
+/* Requests.css */
+
+/* --------------------------------------
+                TABLES
+-------------------------------------- */
+
+#request_table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#request_table th,
+#request_table td {
+    padding: 1px 3px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+#request_table .table-row-priority td {
+    background-color: #fff3cd !important;
+    color: #856404;
+    font-weight: 500;
+}
+
+#request_table .table-group-header {
+    background-color: #f8f9fa !important;
+}
+
+#request_table .table-group-header td {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #495057;
+    font-weight: 600;
+}
+
+#request_table .toggle-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 18px;
+    text-align: center;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#request_table .group-header:hover {
+    background-color: #e9ecef !important;
+    cursor: pointer;
+}
+
+#request_table input {
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.6rem;
+}
+
+
+/* --------------------------------------
+                ADD REQUEST
+/* --------------------------------------
+
+/* Utility */
+.pos-rel {
+    position: relative;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: start;
+    align-items: start;
+}
+
+.checkbox-18 {
+    width: 10px;
+    height: 10px;
+}
+
+.checkbox-add-priority {
+    width: 10x;
+    height: 10px;
+}
+
+/* --------------------------------------
+                LINE ENTRIES
+   --------------------------------------  */
+
+.group-header {
+    width: 100%;
+    cursor: pointer;
+    background: #f1f3f5;
+    /* border: 1px solid #000; */
+}
+
+.group-toggle-cell {
+    width: 40px;
+}
+
+tr[class^="child-row-"],
+tr[class*=" child-row-"] {
+    display: none;
+    background: #fcfcfc;
+    font-size: 0.8rem;
+}
+
+.input[name="picked_qty"] {
+    max-width: 50px;
+    text-align: left;
+}
+
+.bin-content-cell {
+    text-align: right;
+    font-weight: bold;
+}
+
+.input[name="is_high_priority"] {
+    max-width: 10px;
+    max-height: 10px;
+}
+
+.status-select {
+    appearance: none;
+    width: 60px;
+    padding: 4px 12px;
+    background: #eee;
+    font-size: 0.6rem;
+    text-align: center;
+}
+
+.notes-input {
+    flex-grow: 1;
+}
+
+.btn-delete {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.btn-delete:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* --------------------------------------
+                LOCATION MODAL
+   --------------------------------------  */
+
+.loc-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.loc-modal-content {
+    background: #fff;
+    width: 50%;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    margin: auto;
+}
+
+.modal-title {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.loc-picker-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* --------------------------------------
+                ROW CLOSED
+   --------------------------------------  */
+
+/* Mute the colors for closed rows */
+.row-closed {
+    background-color: #f1f3f5 !important; /* Slightly darker grey than open rows */
+    color: #adb5bd !important;
+}
+
+/* Ensure priority yellow doesn't override the 'closed' grey */
+#request_table .row-closed.table-row-priority td {
+    background-color: #e9ecef !important; 
+    color: #adb5bd;
+    font-weight: normal;
+}
+
+/* Make inputs look like flat text when disabled */
+.row-closed .input:disabled,
+.row-closed input[type="checkbox"]:disabled {
+    background-color: transparent !important;
+    border: 1px transparent !important;
+    color: #adb5bd !important;
+    cursor: not-allowed;
+    box-shadow: none;
+    appearance: none; 
+}
+
+/* Target the status label specifically */
+.status-label {
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.status-open { 
+    background: #e3f2fd; 
+    color: #1976d2; 
+    border: 1px solid #bbdefb;
+}
+
+.status-closed { 
+    background: #e8f5e9; 
+    color: #388e3c; 
+    border: 1px solid #c8e6c9;
+}
+
+/* Hide or dim the lock icon/actions cell */
+.row-closed td:last-child {
+    opacity: 0.6;
+}

@@ -1,0 +1,557 @@
+/* timesheet.css — timesheet.php (pay-period timesheet, grouped by employee) */
+
+.ts {
+  --ts-row-h: 48px;
+  --ts-issue: var(--danger, #dc2626);
+  --ts-accent: var(--brand, #0dcaf0);
+  padding: 20px 0 8px;
+  overflow: hidden;
+}
+
+/* ---------- Header / toolbar ---------- */
+
+.ts__head {
+  padding: 0 20px 12px;
+}
+
+.ts__title {
+  margin: 0 0 12px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ts__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.ts__range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text);
+}
+
+.ts__range input[type="date"] {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 4px 2px;
+  min-width: 0;
+}
+
+.ts__range-step {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ts__range-step:hover,
+.ts__range-step:focus-visible {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Dropdown menus (Filters / View) */
+
+.ts__menu {
+  position: relative;
+}
+
+.ts__menu > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ts__menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ts__menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 10px;
+  min-width: 240px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: var(--shadow);
+}
+
+.ts__menu-panel label {
+  display: grid;
+  gap: 4px;
+  font-size: .875rem;
+  color: var(--text-muted);
+}
+
+.ts__menu-panel select {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ts__menu-panel .ts__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.ts__menu-panel button {
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.ts__menu-panel button:hover {
+  color: var(--ts-accent);
+}
+
+/* Caret (shared by menus, review toggle, group toggles) */
+
+.ts__caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  transition: transform .15s ease;
+}
+
+.ts__menu[open] > summary .ts__caret {
+  transform: rotate(180deg);
+}
+
+/* Needs review toggle */
+
+.ts__review {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ts__review .ts__caret {
+  transform: rotate(-90deg);
+}
+
+.ts__review[aria-pressed="true"] .ts__caret {
+  transform: none;
+}
+
+.ts__review[aria-pressed="true"] {
+  color: var(--ts-issue);
+}
+
+.ts__count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--ts-issue);
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ts__status {
+  margin: 0;
+  padding: 24px 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- Table ---------- */
+
+.ts__table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+}
+
+.ts__table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ts__table thead th {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: .75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.ts__table td,
+.ts__table tbody th {
+  height: var(--ts-row-h);
+  padding: 0 12px;
+  white-space: nowrap;
+  text-align: left;
+  font-weight: 400;
+}
+
+.ts__table .num {
+  text-align: right;
+}
+
+.ts-muted {
+  color: var(--text-muted);
+}
+
+/* Employee group header */
+
+.ts-group__head {
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.ts-group__head td,
+.ts-group__head th {
+  font-weight: 700;
+}
+
+.ts-group__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ts-group__toggle .ts__caret {
+  transform: rotate(180deg);
+}
+
+.ts-group.is-collapsed .ts-group__toggle .ts__caret {
+  transform: none;
+}
+
+.ts-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ts-accent) 18%, transparent);
+  color: var(--text);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.ts-group__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Time card rows */
+
+.ts-card:hover {
+  background: var(--surface-2);
+}
+
+/* Managers: click a card to edit or void it */
+.ts-card.is-editable {
+  cursor: pointer;
+}
+
+.ts-card.is-editable:focus-visible {
+  outline: 2px solid var(--ts-accent);
+  outline-offset: -2px;
+}
+
+.ts-group.is-collapsed .ts-card,
+.ts-group.is-collapsed .ts-add {
+  display: none;
+}
+
+.ts-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.ts-pill--issue {
+  background: color-mix(in srgb, var(--ts-issue) 12%, transparent);
+  color: var(--ts-issue);
+}
+
+.ts-pill--open {
+  margin-left: 6px;
+  background: color-mix(in srgb, var(--ts-accent) 16%, transparent);
+  color: var(--text);
+}
+
+/* Add time card row */
+
+.ts-add td {
+  height: 44px;
+}
+
+.ts-add__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ts-add__btn span {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.ts-add__btn:hover,
+.ts-add__btn:focus-visible {
+  background: var(--surface-2);
+  color: var(--ts-accent);
+}
+
+/* ---------- Add time card dialog ---------- */
+
+.ts-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.ts-dialog::backdrop {
+  background: rgba(2, 8, 23, .45);
+}
+
+.ts-dialog h3 {
+  margin: 0;
+}
+
+.ts-dialog form {
+  display: grid;
+  gap: 12px;
+}
+
+.ts-dialog label {
+  display: grid;
+  gap: 4px;
+  font-size: .875rem;
+  color: var(--text-muted);
+}
+
+.ts-dialog input {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ts-dialog small {
+  color: var(--text-muted);
+}
+
+.ts-dialog__sub {
+  margin: -6px 0 0;
+  color: var(--text-muted);
+}
+
+.ts-dialog__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ts-dialog__err {
+  margin: 0;
+  min-height: 1em;
+  color: var(--ts-issue);
+  font-size: .875rem;
+}
+
+.ts-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ts-dialog__spacer {
+  flex: 1;
+}
+
+.ts-dialog__void {
+  color: var(--ts-issue, #dc2626);
+  border-color: color-mix(in srgb, var(--ts-issue, #dc2626) 40%, transparent);
+}
+
+.ts-dialog__void[hidden] {
+  display: none;
+}
+
+#tsReasonWrap[hidden],
+.ts-dialog [data-ts-day-times][hidden] {
+  display: none;
+}
+
+/* ---------- Schedules ---------- */
+
+/* Scheduled hours cell (managers): click to change that day */
+.ts-sched {
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ts-sched:hover,
+.ts-sched:focus-visible {
+  background: color-mix(in srgb, var(--ts-accent) 14%, transparent);
+}
+
+.ts-sched__mark {
+  margin-left: 2px;
+  color: var(--ts-accent);
+  font-weight: 700;
+}
+
+/* Scheduled day with no punches */
+.ts-card.is-scheduled-only td {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ts-dialog--wide {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.ts-dialog__check {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  color: var(--text) !important;
+}
+
+.ts-week {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .875rem;
+}
+
+.ts-week th,
+.ts-week td {
+  padding: 4px 6px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.ts-week thead th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: .75rem;
+}
+
+.ts-week input[type="time"],
+.ts-week input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+}
+
+.ts-week tr.is-off input[type="time"],
+.ts-week tr.is-off input[type="number"] {
+  opacity: .35;
+  pointer-events: none;
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 640px) {
+  .ts__head {
+    padding: 0 16px 12px;
+  }
+
+  .ts__range {
+    width: 100%;
+  }
+
+  .ts__range input[type="date"] {
+    flex: 1;
+  }
+
+  .ts__menu-panel {
+    min-width: min(260px, calc(100vw - 32px));
+  }
+
+  .ts-dialog__row {
+    grid-template-columns: 1fr;
+  }
+}
