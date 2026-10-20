@@ -32,11 +32,11 @@ $csrfToken = generateCSRFToken();
 
 if (!isset($title))
   $title = 'TPB';
-if (!isset($page_class) || $page_class === '') 
+if (!isset($page_class) || $page_class === '')
+  $page_class = 'page-supplies';
 if (!isset($content))
-$content = '';
+  $content = '';
 if (!isset($css))
-$page_class = 'page-supplies';
   $css = [];
 if (!isset($js))
   $js = [];
