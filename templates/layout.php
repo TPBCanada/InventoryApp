@@ -122,7 +122,7 @@ function asset_url(string $path, string $base): string
       user-select: none;
     }
     .badge-content.is-collapsed {
-      transform: translateX(calc(100% - 18px));
+      transform: translateX(calc(100% - 18px - 5%));
     }
   </style>
   <link rel="stylesheet" href="<?= asset_url('/refactor_css/site.css', $BASE_URL) ?>" />
