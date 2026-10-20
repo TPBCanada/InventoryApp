@@ -419,7 +419,7 @@ function asset_url(string $path, string $base): string
       updateCountdown();
       window.setInterval(updateCountdown, 1000);
 
-      const content = badge.querySelector('.badge-content');
+      const content = badge.classList.contains('badge-content') ? badge : badge.querySelector('.badge-content');
       if (content) {
         const BADGE_KEY = 'invapp:badge-collapsed';
         if (localStorage.getItem(BADGE_KEY) === '1') content.classList.add('is-collapsed');
