@@ -278,6 +278,7 @@ if ($action === 'reset') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'manual_sql') {
+  app_require_csrf();
   $preset_key = trim((string) ($_POST['preset_key'] ?? ''));
   $manual_sql = trim((string) ($_POST['manual_sql'] ?? ''));
   $current_label = '';
@@ -369,6 +370,7 @@ ob_start();
     <div class="card card--pad reports-card">
       <form id="reports-form" class="form reports-form" method="post" action="">
         <input type="hidden" name="action" value="manual_sql" />
+        <input type="hidden" name="csrf_token" value="<?= h(app_csrf_token()) ?>" />
         <input type="hidden" name="preset_key" id="preset-key" value="" />
         <label for="manual-sql" style="display:block; color:var(--text-muted);">Direct SQL (SELECT/WITH only)</label>
         <textarea id="manual-sql" name="manual_sql" rows="5" class="input" style="width:100%; font-family:ui-monospace;"
