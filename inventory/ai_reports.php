@@ -13,6 +13,10 @@ if (!isset($_SESSION['username'])) {
 
 $role_id = (int) ($_SESSION['role_id'] ?? 0);
 
+// Users whose role_id is in this list are left out of every Order operations figure (data is kept, just not shown).
+// TODO: set to the role_id(s) used for inactive users in xserqhmy_users.users.
+$OPS_INACTIVE_ROLE_IDS = [];
+
 // Restrict to admins/managers/analysts
 $can_view_reports = in_array($role_id, [1, 2, 3], true);
 if (!$can_view_reports) {
@@ -28,119 +32,85 @@ $page_class = 'reports-page';
 
 $hotkeys = [
   [
-    'key' => 'tpb_inventory',
-    'label' => 'Show Inventory',
-    'message' => "SELECT s.sku_num, s.desc, i.quantity, i.updated_at\nFROM inventory i\nJOIN sku s ON i.sku_id = s.id",
+    'key' => 'inventory_by_sku',
+    'label' => 'Inventory totals by SKU',
+    'message' => "SELECT s.sku_num, s.`desc`, s.status, SUM(i.quantity) AS on_hand, COUNT(DISTINCT p.loc_id) AS locations, MAX(i.updated_at) AS last_updated FROM inventory i JOIN sku s ON s.id = i.sku_id JOIN pallet p ON p.id = i.pallet_id WHERE i.quantity > 0 AND p.status <> 'ARCHIVED' GROUP BY s.id, s.sku_num, s.`desc`, s.status ORDER BY s.sku_num",
     'shortcut' => '1'
   ],
   [
     'key' => 'inventory_by_location',
     'label' => 'Inventory by Location',
-    'message' => "SELECT s.sku_num, s.desc, i.quantity, l.row_code, l.bay_num, l.level_code, l.side FROM inventory i JOIN sku s ON i.sku_id = s.id JOIN pallet p ON i.pallet_id = p.id JOIN location l ON p.loc_id = l.id ORDER BY l.row_code, l.bay_num, l.level_code;",
+    'message' => "SELECT s.sku_num, s.`desc`, i.quantity, l.row_code, l.bay_num, l.level_code, l.side FROM inventory i JOIN sku s ON i.sku_id = s.id JOIN pallet p ON i.pallet_id = p.id JOIN location l ON p.loc_id = l.id WHERE i.quantity > 0 AND p.status <> 'ARCHIVED' ORDER BY l.row_code, l.bay_num, l.level_code, l.side",
     'shortcut' => '2'
   ],
   [
     'key' => 'discontinued_skus',
     'label' => 'List all discontinued skus',
-    'message' => "SELECT sku_num, `desc`, status, shelf, created_at FROM sku WHERE status = 'DISCONTINUED' ORDER BY sku_num ASC;",
+    'message' => "SELECT sku_num, `desc`, status, shelf, created_at FROM sku WHERE status = 'DISCONTINUED' ORDER BY sku_num",
     'shortcut' => '3'
   ],
   [
     'key' => 'top_movers',
     'label' => 'Top movers (last 30 days)',
-    'message' => "SELECT s.sku_num, s.desc, SUM(ABS(m.quantity_change)) AS total_shipped, COUNT(m.id) AS shipment_count FROM inventory_movements m JOIN sku s ON m.sku_id = s.id WHERE m.movement_type = 'OUT' AND m.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY s.id ORDER BY total_shipped DESC LIMIT 10;",
+    'message' => "SELECT s.sku_num, s.`desc`, SUM(ABS(m.quantity_change)) AS total_shipped, COUNT(m.id) AS shipment_count FROM inventory_movements m JOIN sku s ON m.sku_id = s.id WHERE m.movement_type = 'OUT' AND m.created_at >= NOW() - INTERVAL 30 DAY GROUP BY s.id, s.sku_num, s.`desc` ORDER BY total_shipped DESC LIMIT 10",
     'shortcut' => '4'
   ],
   [
     'key' => 'low_inventory',
     'label' => 'Low inventory (<20 units)',
-    'message' => "SELECT s.sku_num, s.desc, SUM(i.quantity) AS current_stock FROM sku s LEFT JOIN inventory i ON s.id = i.sku_id WHERE s.status = 'ACTIVE' GROUP BY s.id HAVING current_stock < 20 ORDER BY current_stock ASC;",
+    'message' => "SELECT s.sku_num, s.`desc`, COALESCE(SUM(CASE WHEN p.status <> 'ARCHIVED' THEN i.quantity END), 0) AS current_stock FROM sku s LEFT JOIN inventory i ON i.sku_id = s.id LEFT JOIN pallet p ON p.id = i.pallet_id WHERE s.status = 'ACTIVE' GROUP BY s.id, s.sku_num, s.`desc` HAVING current_stock < 20 ORDER BY current_stock, s.sku_num",
     'shortcut' => '5'
   ],
   [
     'key' => 'adjustments_summary',
     'label' => 'Adjustments summary (14 days)',
-    'message' => "SELECT m.reference AS reason_code, COUNT(*) AS adjustment_count, SUM(m.quantity_change) AS net_quantity_adjusted FROM inventory_movements m WHERE m.movement_type = 'ADJUST' AND m.created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY) GROUP BY m.reference ORDER BY adjustment_count DESC;",
+    'message' => "SELECT m.reference AS reason_code, COUNT(*) AS adjustment_count, SUM(m.quantity_change) AS net_quantity_adjusted FROM inventory_movements m WHERE m.movement_type = 'ADJUST' AND m.created_at >= NOW() - INTERVAL 14 DAY GROUP BY m.reference ORDER BY adjustment_count DESC",
     'shortcut' => '6'
   ],
   [
     'key' => 'stale_on_hand',
     'label' => 'On-hand with no moves in 90 days',
-    'message' => "SELECT s.sku_num, s.`desc`, s.status, SUM(i.quantity) AS current_on_hand, MAX(m.created_at) AS last_move_date FROM sku s LEFT JOIN inventory i ON s.id = i.sku_id LEFT JOIN inventory_movements m ON s.id = m.sku_id AND m.created_at > DATE_SUB(NOW(), INTERVAL 90 DAY) WHERE m.id IS NULL GROUP BY s.id HAVING current_on_hand > 0 ORDER BY current_on_hand DESC;",
+    'message' => "SELECT s.sku_num, s.`desc`, s.status, inv.on_hand AS current_on_hand, lm.last_move AS last_move_date FROM sku s JOIN (SELECT sku_id, SUM(quantity) AS on_hand FROM inventory GROUP BY sku_id HAVING on_hand > 0) inv ON inv.sku_id = s.id LEFT JOIN (SELECT sku_id, MAX(created_at) AS last_move FROM inventory_movements GROUP BY sku_id) lm ON lm.sku_id = s.id WHERE lm.last_move IS NULL OR lm.last_move < NOW() - INTERVAL 90 DAY ORDER BY current_on_hand DESC",
     'shortcut' => '7'
   ],
   [
     'key' => 'unentered_locations',
     'label' => 'Unentered Locations',
-    'message' => "SELECT l.row_code, l.bay_num, l.level_code, l.side FROM location l WHERE l.is_disabled = 0 AND NOT EXISTS (SELECT 1 FROM pallet p JOIN inventory i ON p.id = i.pallet_id WHERE p.loc_id = l.id AND p.status <> 'ARCHIVED' AND i.quantity > 0 ) ORDER BY l.row_code, l.bay_num, l.level_code, l.side;",
+    'message' => "SELECT l.row_code, l.bay_num, l.level_code, l.side FROM location l WHERE l.is_disabled = 0 AND NOT EXISTS (SELECT 1 FROM pallet p JOIN inventory i ON p.id = i.pallet_id WHERE p.loc_id = l.id AND p.status <> 'ARCHIVED' AND i.quantity > 0) ORDER BY l.row_code, l.bay_num, l.level_code, l.side",
     'shortcut' => '8'
   ],
   [
     'key' => 'Pick_Verify_Events',
     'label' => 'Pick Verify Events',
-    'message' => "SELECT po.order_number, po.status, pi.item_no, pve.workflow_stage, pve.event_type, pve.sku_scanned, pve.expected_sku, pve.qty_delta, u.username, u.first_name, u.last_name, pve.meta_json FROM pick_verify_events pve INNER JOIN pick_orders po ON pve.order_id = po.id INNER JOIN pick_items pi ON pve.pick_item_id = pi.id LEFT JOIN xserqhmy_users.users u ON pve.user_id = u.id WHERE po.order_number LIKE '%ENTER_ORDER_NUM%' AND pve.workflow_stage='PICK_OR_PACK'",
+    'message' => "SELECT po.order_number, po.status, pve.created_at, pve.workflow_stage, pve.event_type, pi.item_no, pve.sku_scanned, pve.expected_sku, pve.qty_delta, u.username, u.first_name, u.last_name, pve.meta_json FROM pick_orders po JOIN pick_verify_events pve ON pve.order_id = po.id LEFT JOIN pick_items pi ON pi.id = pve.pick_item_id LEFT JOIN xserqhmy_users.users u ON u.id = pve.user_id WHERE po.order_number LIKE 'ENTER_ORDER_NUM%' AND pve.workflow_stage IN ('pick', 'pack') ORDER BY po.order_number, pve.id",
     'shortcut' => '9'
   ],
   [
     'key' => 'Order Overview (30 Days)',
     'label' => 'Order Overview (30 Days)',
-    'message' => "SELECT po.order_number, po.status, po.created_at AS order_date, item_counts.order_size, pick_times.pick_minutes, u.username FROM pick_orders po LEFT JOIN (SELECT order_id, COUNT(*) AS order_size FROM pick_items GROUP BY order_id) item_counts ON item_counts.order_id = po.id LEFT JOIN (SELECT order_id, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END) AS pick_end, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN user_id END) AS picker_id, ROUND(TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END))/60, 1) AS pick_minutes FROM pick_verify_events WHERE workflow_stage = 'pick' GROUP BY order_id HAVING pick_end IS NOT NULL AND DATE(pick_start) = DATE(pick_end)) pick_times ON pick_times.order_id = po.id LEFT JOIN xserqhmy_users.users u ON u.id = pick_times.picker_id WHERE po.created_at >= NOW() - INTERVAL 30 DAY ORDER BY po.created_at DESC",
+    'message' => "SELECT po.order_number, po.status, po.created_at AS order_date, sz.k AS order_size, ROUND(TIMESTAMPDIFF(SECOND, ev.pick_start, ev.pick_end) / 60, 1) AS pick_minutes, u.username AS picker FROM pick_orders po LEFT JOIN (SELECT order_id, COUNT(*) AS k FROM pick_items WHERE order_id IN (SELECT id FROM pick_orders WHERE created_at >= NOW() - INTERVAL 30 DAY) GROUP BY order_id) sz ON sz.order_id = po.id LEFT JOIN (SELECT order_id, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END) AS pick_end, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN id END) AS last_rtp FROM pick_verify_events WHERE workflow_stage = 'pick' AND created_at >= NOW() - INTERVAL 30 DAY GROUP BY order_id) ev ON ev.order_id = po.id LEFT JOIN pick_verify_events le ON le.id = ev.last_rtp LEFT JOIN xserqhmy_users.users u ON u.id = le.user_id WHERE po.created_at >= NOW() - INTERVAL 30 DAY ORDER BY po.created_at DESC",
     'shortcut' => '10'
   ],
   [
     'key' => 'supplier_barcodes',
     'label' => 'Supplier Barcodes',
-    'message' => "SELECT s.sku_num, b.upc, b.source, b.uom_label, b.multiplier, b.created_at, b.updated_at, b.no_barcode FROM product_uom_barcodes b INNER JOIN sku s ON b.sku_id = s.id",
+    'message' => "SELECT s.sku_num, b.upc, b.source, b.uom_label, b.multiplier, b.created_at, b.updated_at, b.no_barcode FROM product_uom_barcodes b INNER JOIN sku s ON b.sku_id = s.id ORDER BY s.sku_num",
     'shortcut' => '11'
   ],
-  // [
-  //   'key' => 'Pick Time by Order Size',
-  //   'label' => 'Pick Time by Order Size',
-  //   'message' => "SELECT CASE WHEN item_counts.order_size <= 4 THEN 'Small (1-4)' WHEN item_counts.order_size <= 15 THEN 'Medium (5-15)' ELSE 'Large (16+)' END AS size_tier, COUNT(*) AS order_count, ROUND(AVG(pick_times.pick_minutes), 1) AS avg_pick_minutes, ROUND(MIN(pick_times.pick_minutes), 1) AS min_pick_minutes, ROUND(MAX(pick_times.pick_minutes), 1) AS max_pick_minutes FROM (SELECT order_id, COUNT(*) AS order_size FROM pick_items GROUP BY order_id) item_counts JOIN (SELECT order_id, TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END))/60 AS pick_minutes, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END) AS pick_end FROM pick_verify_events WHERE workflow_stage = 'pick' GROUP BY order_id HAVING pick_end IS NOT NULL AND DATE(pick_start) = DATE(pick_end)) pick_times ON pick_times.order_id = item_counts.order_id GROUP BY size_tier ORDER BY FIELD(size_tier, 'Small (1-4)', 'Medium (5-15)', 'Large (16+)')",
-  //   'shortcut' => '12'
-  // ],
-  // [
-  //   'key' => 'Daily Order Velocity',
-  //   'label' => 'Daily Order Velocity',
-  //   'message' => "SELECT pick_date, orders_completed, ROUND(AVG(orders_completed) OVER (ORDER BY pick_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 1) AS rolling_7day_avg FROM (SELECT DATE(pick_end) AS pick_date, COUNT(*) AS orders_completed FROM (SELECT order_id, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END) AS pick_end FROM pick_verify_events WHERE workflow_stage = 'pick' GROUP BY order_id HAVING pick_end IS NOT NULL AND DATE(pick_start) = DATE(pick_end)) t WHERE DATE(pick_end) >= CURDATE() - INTERVAL 30 DAY GROUP BY DATE(pick_end)) daily ORDER BY pick_date DESC",
-  //   'shortcut' => '13'
-  // ],
-  // [
-  //   'key' => 'Avg Orders Per Active Hour',
-  //   'label' => 'Avg Orders Per Active Hour',
-  //   'message' => "SELECT COUNT(*) AS total_orders, COUNT(DISTINCT DATE(pick_end), HOUR(pick_end)) AS active_hours, ROUND(COUNT(*) / COUNT(DISTINCT DATE(pick_end), HOUR(pick_end)), 1) AS avg_orders_per_active_hour FROM (SELECT order_id, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type = 'order_ready_to_pack' THEN created_at END) AS pick_end FROM pick_verify_events WHERE workflow_stage = 'pick' GROUP BY order_id HAVING pick_end IS NOT NULL AND DATE(pick_start) = DATE(pick_end)) t",
-  //   'shortcut' => '14'
-  // ],
-  // [
-  //   'key' => 'Orders Per Hour',
-  //   'label' => 'Orders Per Hour',
-  //   'message' => "SELECT DATE(pick_end) AS period, HOUR(pick_end) AS hour, COUNT(*) AS orders_completed FROM (SELECT order_id, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type='order_ready_to_pack' THEN created_at END) AS pick_end FROM pick_verify_events WHERE workflow_stage='pick' GROUP BY order_id HAVING pick_end IS NOT NULL AND DATE(pick_start)=DATE(pick_end)) t GROUP BY period, hour ORDER BY period DESC, hour",
-  //   'shortcut' => '15'
-  // ],
-  // [
-  //   'key' => 'Orders Per Day',
-  //   'label' => 'Orders Per Day',
-  //   'message' => "SELECT DATE(pick_end) AS period, COUNT(*) AS orders_completed FROM (SELECT order_id, MIN(created_at) AS pick_start, MAX(CASE WHEN event_type='order_ready_to_pack' THEN created_at END) AS pick_end FROM pick_verify_events WHERE workflow_stage='pick' GROUP BY order_id HAVING pick_end IS NOT NULL AND DATE(pick_start)=DATE(pick_end)) t GROUP BY period ORDER BY period DESC",
-  //   'shortcut' => '16'
-  // ],
-  // [
-  //   'key' => 'Orders Per Month',
-  //   'label' => 'Orders Per Month',
-  //   'message' => "SELECT DATE_FORMAT(pick_end, '%Y-%m') AS period, COUNT(*) AS orders_completed FROM (SELECT order_id, MAX(CASE WHEN event_type='order_ready_to_pack' THEN created_at END) AS pick_end FROM pick_verify_events WHERE workflow_stage='pick' GROUP BY order_id HAVING pick_end IS NOT NULL) t GROUP BY period ORDER BY period DESC",
-  //   'shortcut' => '17'
-  // ],
-  // [
-  //   'key' => 'Avg Order Size by SKU (Lines)',
-  //   'label' => 'Avg Order Size by SKU (Lines)',
-  //   'message' => "SELECT pi.item_no AS sku, ROUND(AVG(sz.order_size),1) AS avg_order_size_lines, COUNT(DISTINCT pi.order_id) AS orders FROM pick_items pi JOIN (SELECT order_id, COUNT(*) AS order_size FROM pick_items GROUP BY order_id) sz ON sz.order_id = pi.order_id LEFT JOIN pick_verify_events pve ON pve.order_id = pi.order_id AND pve.event_type='order_ready_to_pack' WHERE pve.user_id = 'ENTER_USER_ID' OR 'ENTER_USER_ID' = 'ALL' GROUP BY pi.item_no ORDER BY orders DESC",
-  //   'shortcut' => '10'
-  // ],
-  // [
-  //   'key' => 'Avg Order Size by SKU (Quantity)',
-  //   'label' => 'Avg Order Size by SKU (Quantity)',
-  //   'message' => "SELECT pi.item_no AS sku, ROUND(AVG(pi.qty_ordered),1) AS avg_qty_per_order, COUNT(DISTINCT pi.order_id) AS orders FROM pick_items pi LEFT JOIN pick_verify_events pve ON pve.order_id = pi.order_id AND pve.event_type='order_ready_to_pack' WHERE pve.user_id = 'ENTER_USER_ID' OR 'ENTER_USER_ID' = 'ALL' GROUP BY pi.item_no ORDER BY orders DESC",
-  //   'shortcut' => '10'
-  // ],
+  [
+    'key' => 'closed_vs_picked_7d',
+    'label' => 'Who Closed vs Who Picked (7 Days)',
+    'message' => "SELECT MAX(CONCAT(IFNULL(u.first_name, ''), ' ', IFNULL(u.last_name, ''), ' (#', o.u, ')')) AS closed_by, COUNT(*) AS orders_credited, SUM(o.mine >= o.top_n) AS picked_mostly_by_them, SUM(o.mine < o.top_n) AS closed_for_others, SUM(o.users > 1) AS orders_with_2plus_users, ROUND(AVG(o.mine / o.total) * 100) AS avg_pct_of_scans_by_them, SUM(sz.k = 1) AS single_sku_orders FROM (SELECT c.order_id, c.u, SUM(x.n) AS total, IFNULL(SUM(CASE WHEN x.user_id = c.u THEN x.n END), 0) AS mine, MAX(x.n) AS top_n, COUNT(*) AS users FROM (SELECT e.order_id, e.user_id AS u, e.created_at AS t FROM pick_verify_events e JOIN (SELECT order_id, MAX(id) AS mid FROM pick_verify_events WHERE workflow_stage = 'pick' AND event_type = 'order_ready_to_pack' GROUP BY order_id HAVING MAX(created_at) >= NOW() - INTERVAL 7 DAY) m ON m.mid = e.id) c JOIN (SELECT xs.order_id, xs.user_id, COUNT(*) AS n FROM pick_verify_events xs WHERE xs.workflow_stage = 'pick' AND xs.user_id IS NOT NULL AND xs.order_id IN (SELECT order_id FROM pick_verify_events WHERE workflow_stage = 'pick' AND event_type = 'order_ready_to_pack' AND created_at >= NOW() - INTERVAL 7 DAY) GROUP BY xs.order_id, xs.user_id) x ON x.order_id = c.order_id GROUP BY c.order_id, c.u) o LEFT JOIN (SELECT order_id, COUNT(*) AS k FROM pick_items WHERE order_id IN (SELECT order_id FROM pick_verify_events WHERE workflow_stage = 'pick' AND event_type = 'order_ready_to_pack' AND created_at >= NOW() - INTERVAL 7 DAY) GROUP BY order_id) sz ON sz.order_id = o.order_id LEFT JOIN xserqhmy_users.users u ON u.id = o.u GROUP BY o.u ORDER BY orders_credited DESC",
+    'shortcut' => '12'
+  ],
+  [
+    'key' => 'closed_by_user_detail_7d',
+    'label' => 'Orders Closed by One User (7 Days)',
+    'message' => "SELECT po.order_number, DATE_FORMAT(DATE_ADD(o.t, INTERVAL 2 HOUR), '%Y-%m-%d %H:%i') AS closed_at_eastern, sz.k AS sku_lines, o.mine AS scans_by_closer, o.total AS total_scans, ROUND(o.mine / o.total * 100) AS pct_by_closer, o.users AS users_on_order, o.who AS scans_by_user FROM (SELECT c.order_id, c.t, SUM(x.n) AS total, IFNULL(SUM(CASE WHEN x.user_id = c.u THEN x.n END), 0) AS mine, COUNT(*) AS users, GROUP_CONCAT(CONCAT(IFNULL(uu.first_name, ''), ' ', IFNULL(uu.last_name, ''), ': ', x.n) ORDER BY x.n DESC SEPARATOR ', ') AS who FROM (SELECT e.order_id, e.user_id AS u, e.created_at AS t FROM pick_verify_events e JOIN (SELECT order_id, MAX(id) AS mid FROM pick_verify_events WHERE workflow_stage = 'pick' AND event_type = 'order_ready_to_pack' GROUP BY order_id HAVING MAX(created_at) >= NOW() - INTERVAL 7 DAY) m ON m.mid = e.id WHERE e.user_id = ENTER_USER_ID) c JOIN (SELECT xs.order_id, xs.user_id, COUNT(*) AS n FROM pick_verify_events xs WHERE xs.workflow_stage = 'pick' AND xs.user_id IS NOT NULL AND xs.order_id IN (SELECT order_id FROM pick_verify_events WHERE workflow_stage = 'pick' AND event_type = 'order_ready_to_pack' AND created_at >= NOW() - INTERVAL 7 DAY) GROUP BY xs.order_id, xs.user_id) x ON x.order_id = c.order_id LEFT JOIN xserqhmy_users.users uu ON uu.id = x.user_id GROUP BY c.order_id, c.t) o JOIN pick_orders po ON po.id = o.order_id LEFT JOIN (SELECT order_id, COUNT(*) AS k FROM pick_items WHERE order_id IN (SELECT order_id FROM pick_verify_events WHERE workflow_stage = 'pick' AND event_type = 'order_ready_to_pack' AND created_at >= NOW() - INTERVAL 7 DAY) GROUP BY order_id) sz ON sz.order_id = o.order_id ORDER BY pct_by_closer, o.t DESC",
+    'shortcut' => '13'
+  ],
+  // Removed: Pick Time by Order Size, Daily Order Velocity, Avg Orders Per Active Hour, Orders Per Hour/Day/Month
+  // (covered by the Order operations tab) and Avg Order Size by SKU (Lines/Quantity) (row-multiplying joins).
 ];
 
 $hotkey_sql_map = [];
@@ -189,7 +159,8 @@ if ($action === 'order_ops_data') {
       IFNULL(SUM(k BETWEEN 5 AND 15), 0) AS m,
       IFNULL(SUM(k >= 16), 0) AS l,
       IFNULL(SUM(k), 0) AS k,
-      IFNULL(SUM(q), 0) AS q";
+      IFNULL(SUM(q), 0) AS q,
+      IFNULL(k = 1, 0) AS one";
 
   $ops_query = function (string $sql) use ($conn): array {
     $res = $conn->query($sql);
@@ -209,13 +180,14 @@ if ($action === 'order_ops_data') {
   }, $rows);
 
   try {
-    $days = $ints($ops_query($ops_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, u, {$ops_sizes} FROM b GROUP BY dy, u ORDER BY dy, u"), 1);
-    $hours = $ints($ops_query($ops_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, HOUR(t) AS h, u, {$ops_sizes} FROM b GROUP BY dy, h, u ORDER BY dy, h, u"), 1);
-    $pick = [];
-    foreach ($ops_query($ops_base . "SELECT u, ROUND(AVG(CASE WHEN DATE(s) = DATE(t) THEN TIMESTAMPDIFF(SECOND, s, t) END) / 60, 1) AS pm FROM b GROUP BY u") as $r) {
-      if ($r[1] !== null)
-        $pick[(int) $r[0]] = (float) $r[1];
-    }
+    $days = $ints($ops_query($ops_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, u, {$ops_sizes} FROM b GROUP BY dy, u, one ORDER BY dy, u"), 1);
+    $hours = $ints($ops_query($ops_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, HOUR(t) AS h, u, {$ops_sizes} FROM b GROUP BY dy, h, u, one ORDER BY dy, h, u"), 1);
+    // Pick time per day, user and single/multi split, so the page can average it over the selected dates and filter.
+    // Only orders started and finished on the same day count, so overnight gaps don't inflate the time.
+    $pick_secs = $ints($ops_query($ops_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, u, IFNULL(k = 1, 0) AS one,
+        IFNULL(SUM(CASE WHEN DATE(s) = DATE(t) THEN TIMESTAMPDIFF(SECOND, s, t) END), 0) AS secs,
+        SUM(DATE(s) = DATE(t)) AS n
+      FROM b GROUP BY dy, u, one HAVING n > 0 ORDER BY dy, u"), 1);
 
     // Packer data (from pack workflow_stage)
     $pack_base = "WITH last_pack AS (
@@ -229,7 +201,18 @@ if ($action === 'order_ops_data') {
       pb AS (
         SELECT pd.u, pd.t, pack_sz.k, pack_sz.q FROM pack_done pd
         LEFT JOIN pack_sz ON pack_sz.order_id = pd.order_id) ";
-    $pack_days = $ints($ops_query($pack_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, u, {$ops_sizes} FROM pb GROUP BY dy, u ORDER BY dy, u"), 1);
+    $pack_days = $ints($ops_query($pack_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, u, {$ops_sizes} FROM pb GROUP BY dy, u, one ORDER BY dy, u"), 1);
+    $pack_hours = $ints($ops_query($pack_base . "SELECT DATE_FORMAT(t, '%Y-%m-%d') AS dy, HOUR(t) AS h, u, {$ops_sizes} FROM pb GROUP BY dy, h, u, one ORDER BY dy, h, u"), 1);
+
+    // Working hours: for each user each day, first scan to last scan at that stage (breaks included).
+    $work = fn(string $stage) => $ints($ops_query("SELECT DATE_FORMAT(DATE_ADD(created_at, INTERVAL {$shift} HOUR), '%Y-%m-%d') AS dy,
+        user_id AS u, TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) AS secs,
+        TIME_TO_SEC(DATE_ADD(MIN(created_at), INTERVAL {$shift} HOUR)) AS t0,
+        TIME_TO_SEC(DATE_ADD(MAX(created_at), INTERVAL {$shift} HOUR)) AS t1
+      FROM pick_verify_events WHERE workflow_stage = '{$stage}' AND user_id IS NOT NULL
+      GROUP BY dy, u ORDER BY dy, u"), 1);
+    $pick_work = $work('pick');
+    $pack_work = $work('pack');
 
     $asof = $ops_query("SELECT DATE_FORMAT(DATE_ADD(NOW(), INTERVAL {$shift} HOUR), '%Y-%m-%d %H:%i')")[0][0] ?? '';
   } catch (Throwable $e) {
@@ -256,13 +239,30 @@ if ($action === 'order_ops_data') {
     }
   }
 
+  // Inactive users (by role), left out of every figure on the Order operations tab
+  $inactive = [];
+  $inactive_roles = array_values(array_filter(array_map('intval', $OPS_INACTIVE_ROLE_IDS)));
+  if ($all_ids && $inactive_roles) {
+    try {
+      foreach ($ops_query('SELECT id FROM xserqhmy_users.users WHERE id IN (' . implode(',', $all_ids) . ') AND role_id IN (' . implode(',', $inactive_roles) . ')') as $r) {
+        $inactive[] = (int) $r[0];
+      }
+    } catch (Throwable $e) {
+      error_log('order_ops_data inactive: ' . $e->getMessage());
+    }
+  }
+
   echo json_encode([
     'asof' => $asof,
-    'days' => $days,    // [date, user_id, orders, small, medium, large, sku_lines, units]
-    'hours' => $hours,  // [date, hour, user_id, orders, small, medium, large, sku_lines, units]
-    'pack_days' => $pack_days,  // [date, user_id, orders, small, medium, large, sku_lines, units]
-    'pick_minutes' => $pick,
+    'days' => $days,    // [date, user_id, orders, small, medium, large, sku_lines, units, single_sku]
+    'hours' => $hours,  // [date, hour, user_id, orders, small, medium, large, sku_lines, units, single_sku]
+    'pack_days' => $pack_days,  // [date, user_id, orders, small, medium, large, sku_lines, units, single_sku]
+    'pack_hours' => $pack_hours,  // [date, hour, user_id, orders, small, medium, large, sku_lines, units, single_sku]
+    'pick_secs' => $pick_secs,  // [date, user_id, single_sku, seconds, orders_timed]
+    'pick_work' => $pick_work,  // [date, user_id, seconds first to last pick scan, first scan, last scan (secs after midnight)]
+    'pack_work' => $pack_work,  // [date, user_id, seconds first to last pack scan, first scan, last scan (secs after midnight)]
     'names' => $names,
+    'inactive' => $inactive,  // user ids with an inactive role; removed client-side from all data
   ]);
   exit;
 }
@@ -878,7 +878,7 @@ ob_start();
       </div>
 
       <div class="reports-chart-controls ops-controls">
-        <div class="ops-seg" role="group" aria-label="Group by">
+        <div class="ops-seg" id="ops-period" role="group" aria-label="Group by">
           <button type="button" data-p="hour" aria-pressed="false">Hour of day</button>
           <button type="button" data-p="day" aria-pressed="true">Day</button>
           <button type="button" data-p="month" aria-pressed="false">Month</button>
@@ -909,15 +909,69 @@ ob_start();
           </select>
           <button type="button" id="ops-mode-toggle" class="btn btn--ghost" style="padding: 6px 10px; font-size: 0.9rem; white-space: nowrap;">Switch to Packer</button>
         </div>
-        <div id="ops-flagbox" hidden>
-          <label class="ops-check"><input type="checkbox" id="ops-flag"> <span id="ops-flaglabel">Include flagged
-              account in picker comparisons</span></label>
+        <div class="ops-dates">
+          <label for="ops-sku">Orders:</label>
+          <select id="ops-sku" class="input">
+            <option value="all">All orders</option>
+            <option value="single">Single-SKU only</option>
+            <option value="multi">Multi-SKU only</option>
+          </select>
         </div>
+        <details class="ops-excl" id="ops-excl">
+          <summary class="btn btn--ghost ops-excl__summary" id="ops-excl-sum">Exclude users</summary>
+          <div class="ops-excl__panel">
+            <p class="ops-excl__hint">Ticked users are left out of every total, average and chart.</p>
+            <div id="ops-excl-list"></div>
+            <button type="button" class="btn btn--ghost ops-excl__clear" id="ops-excl-clear">Clear all</button>
+          </div>
+        </details>
       </div>
 
-      <div id="ops-kpis" class="reports-summary-grid"></div>
-      <p class="ops-note" id="ops-flagnote" hidden></p>
+      <div class="ops-defs-row">
+        <button type="button" class="btn btn--ghost ops-defs-btn" id="ops-defs-open" aria-haspopup="dialog">What these numbers mean</button>
+      </div>
+      <div id="ops-kpis" class="reports-summary-grid ops-kpis--main"></div>
+      <div id="ops-kpis2" class="reports-summary-grid ops-kpis--context"></div>
+      <dialog class="ops-defs" id="ops-defs" aria-labelledby="ops-defs-title">
+        <div class="ops-defs__body">
+        <h3 id="ops-defs-title">What these numbers mean</h3>
+        <dl>
+          <dt>Orders completed</dt>
+          <dd>Orders whose pick was marked ready to pack.</dd>
+          <dt>Units picked</dt>
+          <dd>Verified quantity on those orders.</dd>
+          <dt>Picker working-hours</dt>
+          <dd>For each picker each day, the time from their first pick scan to their last, added up across everyone. It includes breaks.</dd>
+          <dt>Team hours on the floor</dt>
+          <dd>For each day, the time from the first pick scan by anyone to the last pick scan by anyone, added up across days.
+            The team rate divides by these hours, so it shows what the whole team produced per hour of operation.</dd>
+        </dl>
+        <p class="ops-defs__note">Orders and units per working hour divide by these working hours. In Packer view the same
+          rules use pack scans. Working hours can't be split by order type, so with the Orders filter set they still
+          cover all orders.</p>
+        <form method="dialog"><button class="btn btn--ghost" id="ops-defs-close">Close</button></form>
+        </div>
+      </dialog>
+      <div class="ops-note" id="ops-flagnote" hidden>
+        <p id="ops-flagtext"></p>
+        <label class="ops-check"><input type="checkbox" id="ops-flag"> <span id="ops-flaglabel"></span></label>
+      </div>
     </div>
+
+    <section class="card card--pad reports-card" aria-labelledby="ops-h0">
+      <h3 class="ops-title" id="ops-h0">Production by person</h3>
+      <p class="ops-cap" id="ops-cap0"></p>
+      <div class="ops-seg" id="ops-metric" role="group" aria-label="Measure">
+        <button type="button" data-m="uph" aria-pressed="true">Units per working hour</button>
+        <button type="button" data-m="oph" aria-pressed="false">Orders per working hour</button>
+        <button type="button" data-m="lpo" aria-pressed="false">SKU lines per order</button>
+        <button type="button" data-m="upo" aria-pressed="false">Units per order</button>
+      </div>
+      <div class="ops-panel ops-panel--wide">
+        <h4 id="ops-t0"></h4>
+        <div class="ops-chart ops-chart--tall" id="ops-w0u"><canvas id="ops-c0u"></canvas></div>
+      </div>
+    </section>
 
     <section class="card card--pad reports-card" aria-labelledby="ops-h1">
       <h3 class="ops-title" id="ops-h1">Orders completed</h3>
@@ -967,15 +1021,38 @@ ob_start();
       </div>
     </section>
 
+    <section class="card card--pad reports-card" aria-labelledby="ops-h4">
+      <h3 class="ops-title" id="ops-h4">Orders per active hour</h3>
+      <p class="ops-cap" id="ops-cap4"></p>
+      <div class="ops-grid">
+        <div class="ops-panel">
+          <h4 id="ops-t4">Over time</h4>
+          <div class="ops-chart"><canvas id="ops-c4"></canvas></div>
+        </div>
+        <div class="ops-panel">
+          <h4>By person <span>orders per active hour</span></h4>
+          <div class="ops-chart ops-chart--tall" id="ops-w4u"><canvas id="ops-c4u"></canvas></div>
+        </div>
+      </div>
+    </section>
+
     <details class="card card--pad reports-card ops-about">
       <summary>How these numbers are worked out</summary>
       <p>An order counts as completed when its pick is marked ready to pack (the last <code>order_ready_to_pack</code>
         event in <code>pick_verify_events</code>), and the picker is the user on that event. Order size in SKU lines is
         the number of <code>pick_items</code> rows; units are the summed <code>qty_verified</code>. Orders with no item
-        lines count as orders but not in size or unit figures.</p>
+        lines count as orders but not in size or unit figures. The Orders filter splits single-SKU orders (exactly one
+        <code>pick_items</code> row) from multi-SKU orders; orders with no item lines fall under multi-SKU.</p>
       <p>Every chart and total follows the selected dates, including hour of day. Months and quarters marked with an
         asterisk are only partly inside the selected dates. Per-picker averages only include pickers with at least 10
         orders. Server times are shifted two hours from Mountain to Eastern.</p>
+      <p>Users ticked under Exclude users are removed from every figure on the page, including team totals, averages and
+        the shared-login check. The selection is remembered in this browser.</p>
+      <p>Orders per active hour counts only clock hours in which a person completed at least one order, so time spent on
+        an order that finishes in a later hour is not counted. The team rate divides all orders by the clock hours in
+        which anyone completed an order; the person-hour rate divides them by each person's active hours added together.
+        This applies to the "Orders per active hour" charts only. The per-working-hour figures at the top instead use
+        each person's first to last scan of the day, breaks included.</p>
     </details>
   </div>
 </div>
@@ -1004,10 +1081,14 @@ ob_start();
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const MIN_ORDERS = 10;
-    const st = { p: 'day', u: 'all', flag: false, mode: 'picker' };
+    const st = { metric: 'uph', p: 'day', u: 'all', flag: false, mode: 'picker', sku: 'all', excl: new Set() };
+    try { (JSON.parse(localStorage.getItem('opsExcludedUsers') || '[]') || []).forEach(u => st.excl.add(+u)); } catch (e) { }
+    const saveExcl = () => { try { localStorage.setItem('opsExcludedUsers', JSON.stringify([...st.excl])); } catch (e) { } };
+    let ROSTER = { picker: new Map(), packer: new Map() }; // user id -> orders in the selected dates, before exclusions
     const charts = {};
-    let D = [], H = [], PACK_D = [], PICK = {}, NAMES = {}, ALL_DAYS = [], PERIOD_DAYS = {}, PU = [], PAC = [], FLAG = null;
-    let RAW_D = [], RAW_H = [], RAW_PACK_D = [], DATA_MIN = '', DATA_MAX = '', TODAY = '';
+    let D = [], H = [], PACK_D = [], PACK_H = [], PICK = {}, NAMES = {}, ALL_DAYS = [], PERIOD_DAYS = {}, PU = [], PAC = [], FLAG = null;
+    let W = [], PACK_W = [], RAW_W = [], RAW_PACK_W = [];
+    let RAW_D = [], RAW_H = [], RAW_PACK_D = [], RAW_PACK_H = [], RAW_PS = [], DATA_MIN = '', DATA_MAX = '', TODAY = '';
     const range = { from: '', to: '' }; // '' = open-ended
     const $ = id => document.getElementById(id);
 
@@ -1028,24 +1109,59 @@ ob_start();
     const pKey = d => st.p === 'month' ? d.slice(0, 7) : st.p === 'quarter' ? qKey(d) : d;
     const fmtDay = d => MONTHS[+d.slice(5, 7) - 1] + ' ' + (+d.slice(8, 10));
     const inUser = r => st.u === 'all' || r.u === +st.u;
+    const HRS = () => st.mode === 'packer' ? PACK_H : H;
+    const DAYS = () => st.mode === 'packer' ? PACK_D : D;
+    const WORK = () => st.mode === 'packer' ? PACK_W : W;
+    const ROLE = () => st.mode === 'packer' ? 'packers' : 'pickers';
+    // Orders per active hour. Hour rows are per date + clock hour + user + single/multi split, so person-hours
+    // are counted as distinct date + hour + user. team = orders / distinct clock hours with any completion.
+    const ordersOf = rows => rows.reduce((a, r) => a + r.o, 0);
+    const slotsOf = rows => new Set(rows.map(r => r.d + ' ' + r.h)).size;
+    const phOf = rows => new Set(rows.map(r => r.d + ' ' + r.h + ' ' + r.u)).size;
+    const rate = (rows, team) => { const n = team ? slotsOf(rows) : phOf(rows); return n ? ordersOf(rows) / n : null; };
 
     // ----- data -----
     function setData(json) {
-      const row = (a, o) => ({ u: +a[o], o: +a[o + 1], s: +a[o + 2], m: +a[o + 3], l: +a[o + 4], k: +a[o + 5], q: +a[o + 6] });
+      const row = (a, o) => ({ u: +a[o], o: +a[o + 1], s: +a[o + 2], m: +a[o + 3], l: +a[o + 4], k: +a[o + 5], q: +a[o + 6], one: +a[o + 7] === 1 });
       RAW_D = (json.days || []).map(a => Object.assign(row(a, 1), { d: a[0] }));
       RAW_H = (json.hours || []).map(a => Object.assign(row(a, 2), { d: a[0], h: +a[1] }));
       RAW_PACK_D = (json.pack_days || []).map(a => Object.assign(row(a, 1), { d: a[0] }));
-      PICK = json.pick_minutes || {}; NAMES = json.names || {};
+      RAW_PACK_H = (json.pack_hours || []).map(a => Object.assign(row(a, 2), { d: a[0], h: +a[1] }));
+      RAW_PS = (json.pick_secs || []).map(a => ({ d: a[0], u: +a[1], one: +a[2] === 1, secs: +a[3], n: +a[4] }));
+      const wRow = a => ({ d: a[0], u: +a[1], secs: +a[2], t0: +a[3], t1: +a[4] });
+      RAW_W = (json.pick_work || []).map(wRow); RAW_PACK_W = (json.pack_work || []).map(wRow);
+      NAMES = json.names || {};
+      // Users with an inactive role are removed from all data, so they never appear in totals, charts or the exclude list
+      const off = new Set((json.inactive || []).map(Number));
+      if (off.size) {
+        const on = r => !off.has(r.u);
+        RAW_D = RAW_D.filter(on); RAW_H = RAW_H.filter(on); RAW_PACK_D = RAW_PACK_D.filter(on); RAW_PACK_H = RAW_PACK_H.filter(on);
+        RAW_PS = RAW_PS.filter(on); RAW_W = RAW_W.filter(on); RAW_PACK_W = RAW_PACK_W.filter(on);
+        off.forEach(u => st.excl.delete(u));
+      }
       const days = [...new Set(RAW_D.map(r => r.d))].sort();
       DATA_MIN = days[0] || ''; DATA_MAX = days[days.length - 1] || '';
       TODAY = (json.asof || '').slice(0, 10) || DATA_MAX;
       ['ops-from', 'ops-to'].forEach(id => { $(id).min = DATA_MIN; $(id).max = TODAY; });
       applyPreset($('ops-preset').value, true);
     }
-    const inRange = r => (!range.from || r.d >= range.from) && (!range.to || r.d <= range.to);
+    const inDates = r => (!range.from || r.d >= range.from) && (!range.to || r.d <= range.to);
+    const inRange = r => inDates(r) && (st.sku === 'all' || (st.sku === 'single') === r.one);
     function derive() {
-      D = RAW_D.filter(inRange); H = RAW_H.filter(inRange); PACK_D = RAW_PACK_D.filter(inRange);
-      ALL_DAYS = [...new Set(D.map(r => r.d))].sort();
+      D = RAW_D.filter(inRange); H = RAW_H.filter(inRange); PACK_D = RAW_PACK_D.filter(inRange); PACK_H = RAW_PACK_H.filter(inRange);
+      // Working hours can't be split by order type, so they follow the dates and exclusions only
+      W = RAW_W.filter(r => inDates(r) && !st.excl.has(r.u)); PACK_W = RAW_PACK_W.filter(r => inDates(r) && !st.excl.has(r.u));
+      // Roster for the exclude list, then drop excluded users from everything, so totals and averages are true "everyone else" figures.
+      const tally = rows => rows.reduce((m, r) => m.set(r.u, (m.get(r.u) || 0) + r.o), new Map());
+      ROSTER = { picker: tally(D), packer: tally(PACK_D) };
+      if (st.excl.size) {
+        const keepU = r => !st.excl.has(r.u);
+        D = D.filter(keepU); H = H.filter(keepU); PACK_D = PACK_D.filter(keepU); PACK_H = PACK_H.filter(keepU);
+      }
+      // Average minutes per pick for each picker, over the same dates and filter as everything else
+      const ps = new Map();
+      RAW_PS.filter(r => inRange(r) && !st.excl.has(r.u)).forEach(r => { const a = ps.get(r.u) || { secs: 0, n: 0 }; a.secs += r.secs; a.n += r.n; ps.set(r.u, a); });
+      PICK = {}; ps.forEach((a, u) => { PICK[u] = a.secs / a.n / 60; });
       const m = new Map();
       D.forEach(r => {
         if (!m.has(r.u)) m.set(r.u, Object.assign(z(), { u: r.u, days: new Set() }));
@@ -1060,8 +1176,10 @@ ob_start();
       });
       PAC = [...mp.values()];
       // Shared-login check (within the selected dates): a large share of orders at a small fraction of everyone else's pick time.
-      const total = PU.reduce((a, p) => a + p.o, 0);
       FLAG = null;
+      // TESTING: shared-login flag disabled, so every picker (incl. #17) counts everywhere. Remove the /* */ to restore.
+      /*
+      const total = PU.reduce((a, p) => a + p.o, 0);
       PU.forEach(p => {
         if (PICK[p.u] == null || !total) return;
         const others = PU.filter(x => x.u !== p.u && PICK[x.u] != null);
@@ -1070,6 +1188,14 @@ ob_start();
         if (avgOthers && p.o / total >= 0.2 && PICK[p.u] < avgOthers * 0.25 && (!FLAG || p.o > FLAG.o))
           FLAG = { u: p.u, o: p.o, share: p.o / total, pm: PICK[p.u], others: avgOthers };
       });
+      // Unless "show" is ticked, the flagged account is left out of all picker figures, totals included.
+      // The check above runs on everyone first, so the account stays flagged and can be shown again.
+      if (FLAG && !st.flag) {
+        const keep = r => r.u !== FLAG.u;
+        D = D.filter(keep); H = H.filter(keep); W = W.filter(keep); PU = PU.filter(keep);
+      }
+      */
+      ALL_DAYS = [...new Set(DAYS().map(r => r.d))].sort();
     }
 
     // ----- date range -----
@@ -1139,7 +1265,7 @@ ob_start();
     function series(filter) {
       const keys = keysFor(), map = new Map(keys.map(k => [k, z()]));
       const data = st.mode === 'packer' ? PACK_D : D;
-      if (st.p === 'hour') H.filter(filter).forEach(r => { if (map.has(r.h)) add(map.get(r.h), r); });
+      if (st.p === 'hour') HRS().filter(filter).forEach(r => { if (map.has(r.h)) add(map.get(r.h), r); });
       else data.filter(filter).forEach(r => add(map.get(pKey(r.d)), r));
       return { keys, vals: keys.map(k => map.get(k)) };
     }
@@ -1194,20 +1320,49 @@ ob_start();
     function sizeTall(id, n) { $(id).style.height = Math.max(220, n * 26 + 40) + 'px'; }
 
     // ----- render -----
+    // Working hours per person, and the team's hours on the floor (first scan by anyone to last scan by anyone, per day)
+    function workHours(rows) {
+      const byU = new Map(), day = new Map();
+      rows.forEach(r => {
+        byU.set(r.u, (byU.get(r.u) || 0) + r.secs / 3600);
+        const d = day.get(r.d) || { a: r.t0, b: r.t1 }; d.a = Math.min(d.a, r.t0); d.b = Math.max(d.b, r.t1); day.set(r.d, d);
+      });
+      let floor = 0; day.forEach(d => { floor += Math.max(0, d.b - d.a) / 3600; });
+      return { byU, person: [...byU.values()].reduce((a, h) => a + h, 0), floor };
+    }
     function kpis() {
-      const t = D.filter(inUser).reduce(add, z()), days = daysFor(st.u), n = sized(t);
-      const who = st.u === 'all' ? 'All pickers' : name(+st.u);
-      const k = [[fmt(t.o), 'Orders completed', who], [fmt(days), 'Working days', 'with at least one order'],
-      [f1(t.o / days), 'Orders per working day', ''], [f1(t.k / n), 'SKU lines per order', 'average'], [f1(t.q / n), 'Units per order', 'average, verified qty']];
-      $('ops-kpis').innerHTML = k.map(([v, l, m]) => `<div class="reports-summary-card"><div class="reports-summary-card__label">${esc(l)}</div><div class="reports-summary-card__value">${esc(v)}</div><div class="reports-summary-card__meta">${esc(m)}</div></div>`).join('');
+      const rows = DAYS().filter(inUser), t = rows.reduce(add, z()), days = daysFor(st.u), n = sized(t);
+      const who = st.u === 'all' ? 'All ' + ROLE() : name(+st.u), team = st.u === 'all';
+      const wh = workHours(WORK().filter(inUser)), hrs = wh.person, per = v => hrs ? v / hrs : null, perF = v => wh.floor ? v / wh.floor : null;
+      const verb = st.mode === 'packer' ? 'packed' : 'picked', unit = st.mode === 'packer' ? 'packer' : 'picker';
+      const mix = st.sku === 'all' ? '' : ' Hours cover all order types.';
+      const hrTxt = team
+        ? v => `per ${unit} working hour. Team: ${f1(perF(v))} per hour on the floor (${fmt(Math.round(wh.floor))} h).${mix}`
+        : () => `over ${f1(hrs)} working hours.${mix}`;
+      const card = ([v, l, m]) => `<div class="reports-summary-card"><div class="reports-summary-card__label">${esc(l)}</div><div class="reports-summary-card__value">${esc(v)}</div><div class="reports-summary-card__meta">${esc(m)}</div></div>`;
+      $('ops-kpis').innerHTML = [
+        [f1(per(t.q)), `Units ${verb} per hour`, hrTxt(t.q)],
+        [f1(per(t.o)), 'Orders completed per hour', hrTxt(t.o)],
+        [f1(t.k / n), 'SKU lines per order', 'average'],
+        [f1(t.q / n), 'Units per order', 'average, verified qty']
+      ].map(card).join('');
+      const one = rows.filter(r => r.one).reduce((a, r) => a + r.o, 0);
+      const ctx = [[fmt(t.o), 'Orders completed', who], [fmt(days), 'Working days', 'with at least one order'],
+        [f1(t.o / days), 'Orders per working day', ''], [f1(hrs), 'Working hours', team ? `all ${ROLE()}, first to last scan` : 'first to last scan']];
+      if (st.sku === 'all') ctx.push([fmt(one), 'Single-SKU orders', t.o ? `${Math.round(one / t.o * 100)}% of orders` : '']);
+      $('ops-kpis2').innerHTML = ctx.map(card).join('');
     }
     function flagNote() {
-      $('ops-flagbox').hidden = !FLAG;
       const el = $('ops-flagnote');
-      if (!FLAG || st.flag) { el.hidden = true; return; }
-      el.hidden = false;
-      el.innerHTML = `<strong>${esc(name(FLAG.u))} is left out of picker comparisons.</strong> This account closed ${fmt(FLAG.o)} orders, ${Math.round(FLAG.share * 100)}% of the total, at an average of ${f1(FLAG.pm)} minutes per pick against about ${Math.round(FLAG.others)} minutes for everyone else. That pace and volume can mean a shared or bulk-verification login rather than one person's work. Its orders still count in every total and time chart.`;
-      $('ops-flaglabel').textContent = 'Include account #' + FLAG.u + ' in picker comparisons';
+      el.hidden = !FLAG || st.mode !== 'picker';
+      if (el.hidden) return;
+      const who = esc(name(FLAG.u));
+      const why = `This account closed ${fmt(FLAG.o)} orders (${Math.round(FLAG.share * 100)}% of all orders) at ${f1(FLAG.pm)} minutes per pick, against about ${Math.round(FLAG.others)} minutes for everyone else. That usually means a shared or bulk-verification login, not one person's picking.`;
+      $('ops-flagtext').innerHTML = st.flag
+        ? `<strong>${who} is included but may be a shared login.</strong> ${why} Its orders count in every total and chart, and its bars are highlighted so it isn't read as one person's work.`
+        : `<strong>${who} is left out because it may be a shared login.</strong> ${why} Its ${fmt(FLAG.o)} orders are not counted in any total or chart on this page.`;
+      $('ops-flaglabel').textContent = `Include ${name(FLAG.u)} in all figures`;
+      $('ops-flag').checked = st.flag;
     }
     function render() {
       const data = st.mode === 'packer' ? PACK_D : D;
@@ -1216,10 +1371,10 @@ ob_start();
       if (panels.ops.hidden || !window.Chart || !RAW_D.length) return;
       if (!data.length) {
         Object.keys(charts).forEach(k => { charts[k].destroy(); delete charts[k]; });
-        $('ops-kpis').innerHTML = '';
+        $('ops-kpis').innerHTML = ''; $('ops-kpis2').innerHTML = '';
         const msg = st.mode === 'packer' ? 'No packed orders in the selected dates.' : 'No completed orders in the selected dates.';
-        ['ops-cap1', 'ops-cap2', 'ops-cap3'].forEach(id => { $(id).textContent = msg; });
-        $('ops-flagnote').hidden = true; $('ops-flagbox').hidden = true;
+        ['ops-cap0', 'ops-cap1', 'ops-cap2', 'ops-cap3', 'ops-cap4'].forEach(id => { $(id).textContent = msg; });
+        $('ops-flagnote').hidden = true;
         return;
       }
       PERIOD_DAYS = {};
@@ -1228,7 +1383,7 @@ ob_start();
       Chart.defaults.font.family = T.font;
       document.querySelectorAll('.ops-sw').forEach(s => { s.style.background = T[s.dataset.tier]; });
       kpis(); flagNote();
-      const role = st.mode === 'packer' ? 'packers' : 'pickers';
+      const role = ROLE();
       const who = st.u === 'all' ? `all ${role}` : name(+st.u);
       const per = { hour: 'by hour of day', day: 'by day', month: 'by month', quarter: 'by quarter' }[st.p];
       const S = series(filter), ALL = series(() => true), labels = S.keys.map(k => label(k));
@@ -1237,7 +1392,7 @@ ob_start();
       const perDay = (k, v) => {
         if (st.p === 'hour') return v.o / dayCount;
         if (st.p === 'day') return null;
-        const days = st.u === 'all' ? (PERIOD_DAYS[k] || new Set()).size : new Set(D.filter(r => r.u === +st.u && pKey(r.d) === k).map(r => r.d)).size;
+        const days = st.u === 'all' ? (PERIOD_DAYS[k] || new Set()).size : new Set(data.filter(r => r.u === +st.u && pKey(r.d) === k).map(r => r.d)).size;
         return days ? v.o / days : null;
       };
       const titleCb = i => label(S.keys[i[0].dataIndex], true);
@@ -1260,9 +1415,47 @@ ob_start();
       const msg = st.mode === 'packer' ? 'No packed orders' : 'No completed orders';
       $('ops-cap1').textContent = tot ? `${ordersTxt(tot)} for ${who}. Busiest ${st.p === 'hour' ? 'hour' : st.p}: ${label(S.keys[peak.i], true)} with ${ordersTxt(peak.v)}${pdPeak != null ? ` (${f1(pdPeak)} per working day)` : ''}.` : `${msg} for ${who}.`;
 
-      const userList = users.filter(p => st.flag || !FLAG || p.u !== FLAG.u);
-      const isFlag = u => FLAG && u === FLAG.u, hi = u => st.u !== 'all' && +st.u === u;
+      const flagged = st.mode === 'picker' && FLAG; // the flag is based on pick speed, so it doesn't apply to packers
+      const userList = users.filter(p => st.flag || !flagged || p.u !== FLAG.u);
+      const isFlag = u => flagged && u === FLAG.u, hi = u => st.u !== 'all' && +st.u === u;
       const uColor = u => isFlag(u) ? T.flag : (st.u === 'all' || hi(u)) ? T.accent : T.soft;
+      // 0. Production by person: one measure at a time, with a dashed team-average line
+      {
+        const wh = workHours(WORK()), M = {
+          uph: { lab: `Units ${st.mode === 'packer' ? 'packed' : 'picked'} per working hour`, v: p => p.h ? p.q / p.h : null, all: t => t.h ? t.q / t.h : null },
+          oph: { lab: 'Orders completed per working hour', v: p => p.h ? p.o / p.h : null, all: t => t.h ? t.o / t.h : null },
+          lpo: { lab: 'SKU lines per order', v: p => sized(p) ? p.k / sized(p) : null, all: t => sized(t) ? t.k / sized(t) : null },
+          upo: { lab: 'Units per order', v: p => sized(p) ? p.q / sized(p) : null, all: t => sized(t) ? t.q / sized(t) : null }
+        }[st.metric];
+        const ppl = userList.filter(p => p.o > 0).map(p => Object.assign({}, p, { h: wh.byU.get(p.u) || 0 }))
+          .map(p => Object.assign(p, { val: M.v(p) })).filter(p => p.val != null).sort((a, b) => b.val - a.val);
+        // People under MIN_ORDERS are shown faded and kept out of the average, so a few orders can't skew it
+        const few = p => p.o < MIN_ORDERS, base0 = ppl.some(p => !few(p)) ? ppl.filter(p => !few(p)) : ppl;
+        const tot = base0.reduce((a, p) => { add(a, p); a.h += p.h; return a; }, Object.assign(z(), { h: 0 })), avg = M.all(tot);
+        const nFew = ppl.filter(few).length;
+        $('ops-t0').innerHTML = `${esc(M.lab)} <span>dashed line: average of everyone shown</span>`;
+        $('ops-cap0').textContent = ppl.length
+          ? `${ppl.length} ${role} completed orders. Average ${f1(avg)}${nFew && base0 !== ppl ? ` (${role} with ${MIN_ORDERS}+ orders)` : ''}; highest ${name(ppl[0].u)} at ${f1(ppl[0].val)}.` + (nFew ? ` Faded bars: fewer than ${MIN_ORDERS} orders, so less reliable.` : '') + (st.sku !== 'all' && st.metric.endsWith('ph') ? ' Working hours cover all order types.' : '')
+          : `No ${role} completed orders in the selected dates.`;
+        const avgLine = {
+          id: 'avgLine', afterDatasetsDraw(c) {
+            if (avg == null) return;
+            const x = c.scales.x.getPixelForValue(avg), { top, bottom } = c.chartArea, g = c.ctx;
+            g.save(); g.strokeStyle = T.ink; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+            g.beginPath(); g.moveTo(x, top); g.lineTo(x, bottom); g.stroke();
+            g.setLineDash([]); g.fillStyle = T.ink; g.font = '12px ' + T.font; g.textAlign = 'left';
+            g.fillText('Avg ' + f1(avg), Math.min(x + 4, c.chartArea.right - 60), top + 10); g.restore();
+          }
+        };
+        sizeTall('ops-w0u', ppl.length);
+        make('ops-c0u', {
+          type: 'bar', plugins: [avgLine],
+          data: { labels: ppl.map(p => name(p.u)), datasets: [{ data: ppl.map(p => +p.val.toFixed(2)), backgroundColor: ppl.map(p => few(p) ? T.soft : uColor(p.u)), borderRadius: 3, barThickness: 16 }] },
+          options: base(T, { mode: 'nearest', intersect: true, callbacks: { label: c => { const p = ppl[c.dataIndex]; return [` ${M.lab}: ${f1(p.val)}`, ` ${fmt(p.o)} orders, ${fmt(p.q)} units, ${fmt(p.k)} SKU lines`, ` ${f1(p.h)} working hours`].concat(few(p) ? [` Few orders (under ${MIN_ORDERS}): not in the average`] : []).concat(isFlag(p.u) ? [' Flagged: possible shared login'] : []); } } },
+            { indexAxis: 'y', layout: { padding: { top: 14 } }, scales: axes(T, { horizontal: true }) })
+        });
+      }
+
       const byO = [...userList].sort((a, b) => b.o - a.o); sizeTall('ops-w1u', byO.length);
       make('ops-c1u', {
         type: 'bar', data: { labels: byO.map(p => name(p.u)), datasets: [{ data: byO.map(p => p.o), backgroundColor: byO.map(p => uColor(p.u)), borderRadius: 3, barThickness: 16 }] },
@@ -1298,25 +1491,64 @@ ob_start();
       $('ops-t3').innerHTML = `Average units per order ${per} <span>${esc(who)}</span>`;
       const avg = v => sized(v) ? +(v.q / sized(v)).toFixed(1) : null;
       const ds = [{
-        label: st.u === 'all' ? 'All pickers' : name(+st.u), data: S.vals.map(avg), borderColor: T.accent, backgroundColor: T.accent, borderWidth: 2,
+        label: st.u === 'all' ? `All ${role}` : name(+st.u), data: S.vals.map(avg), borderColor: T.accent, backgroundColor: T.accent, borderWidth: 2,
         pointRadius: st.p === 'day' ? 1.5 : 3, pointHoverRadius: 4, tension: .25, cubicInterpolationMode: 'monotone', spanGaps: true
       }];
-      if (st.u !== 'all') ds.push({ label: 'All pickers', data: ALL.vals.map(avg), borderColor: T.muted, backgroundColor: T.muted, borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: .25, cubicInterpolationMode: 'monotone', spanGaps: true });
+      if (st.u !== 'all') ds.push({ label: `All ${role}`, data: ALL.vals.map(avg), borderColor: T.muted, backgroundColor: T.muted, borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: .25, cubicInterpolationMode: 'monotone', spanGaps: true });
       const o3 = base(T, { callbacks: { title: titleCb, label: c => { const v = (c.datasetIndex === 0 ? S : ALL).vals[c.dataIndex]; return sized(v) ? ` ${c.dataset.label}: ${f1(v.q / sized(v))} units per order (${fmt(v.q)} units, ${fmt(sized(v))} orders)` : ` ${c.dataset.label}: no orders`; } } },
         { scales: axes(T, { yTitle: 'Units per order' }) });
       o3.plugins.legend = { display: st.u !== 'all', position: 'top', align: 'start', labels: { color: T.muted, boxWidth: 18, boxHeight: 2 } };
       make('ops-c3', { type: 'line', data: { labels, datasets: ds }, options: o3 });
       const pu = S.vals.reduce((b, v, i) => { const a = avg(v); return a != null && a > b.v ? { v: a, i } : b; }, { v: -1, i: 0 });
-      $('ops-cap3').textContent = tn ? `${fmt(tt.q)} units picked for ${who}, ${f1(tt.q / tn)} per order on average. Largest average: ${label(S.keys[pu.i], true)} at ${f1(pu.v)} units per order.` : '';
+      $('ops-cap3').textContent = tn ? `${fmt(tt.q)} units ${st.mode === 'packer' ? 'packed' : 'picked'} for ${who}, ${f1(tt.q / tn)} per order on average. Largest average: ${label(S.keys[pu.i], true)} at ${f1(pu.v)} units per order.` : '';
       const uu = userList.filter(p => p.o >= MIN_ORDERS && sized(p)).sort((a, b) => b.q / sized(b) - a.q / sized(a)); sizeTall('ops-w3u', uu.length);
       make('ops-c3u', {
         type: 'bar', data: { labels: uu.map(p => name(p.u)), datasets: [{ data: uu.map(p => +(p.q / sized(p)).toFixed(1)), backgroundColor: uu.map(p => uColor(p.u)), borderRadius: 3, barThickness: 16 }] },
         options: base(T, { mode: 'nearest', intersect: true, callbacks: { label: c => { const p = uu[c.dataIndex]; return [` ${f1(p.q / sized(p))} units per order`, ` ${fmt(p.q)} units across ${fmt(sized(p))} orders`, ` ${f1(p.k / sized(p))} SKU lines per order`]; } } },
           { indexAxis: 'y', scales: axes(T, { horizontal: true }) })
       });
+
+      // 4. Orders per active hour
+      const HR = HRS(), hk = r => st.p === 'hour' ? r.h : pKey(r.d);
+      const group = rows => { const m = new Map(); rows.forEach(r => { const k = hk(r); if (!m.has(k)) m.set(k, []); m.get(k).push(r); }); return m; };
+      const gSel = group(HR.filter(filter)), gAll = group(HR), team = st.u === 'all';
+      const r2 = v => v == null ? null : +v.toFixed(2);
+      $('ops-t4').innerHTML = `Orders per active hour ${per} <span>${esc(who)}</span>`;
+      const ds4 = [{
+        label: team ? 'Team' : name(+st.u), data: S.keys.map(k => gSel.has(k) ? r2(rate(gSel.get(k), team)) : null),
+        borderColor: T.accent, backgroundColor: T.accent, borderWidth: 2, pointRadius: st.p === 'day' ? 1.5 : 3, pointHoverRadius: 4, tension: .25, cubicInterpolationMode: 'monotone', spanGaps: true
+      }, {
+        label: `Per person-hour, all ${role}`, data: S.keys.map(k => gAll.has(k) ? r2(rate(gAll.get(k), false)) : null),
+        borderColor: T.muted, backgroundColor: T.muted, borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: .25, cubicInterpolationMode: 'monotone', spanGaps: true
+      }];
+      const o4 = base(T, { callbacks: { title: titleCb, label: c => { const rows = (c.datasetIndex === 0 ? gSel : gAll).get(S.keys[c.dataIndex]); if (!rows) return ` ${c.dataset.label}: no orders`; const n = c.datasetIndex === 0 && team ? slotsOf(rows) : phOf(rows); return ` ${c.dataset.label}: ${f1(c.raw)} (${fmt(ordersOf(rows))} orders / ${fmt(n)} hrs)`; } } },
+        { scales: axes(T, { yTitle: 'Orders per hour' }) });
+      o4.plugins.legend = { display: true, position: 'top', align: 'start', labels: { color: T.muted, boxWidth: 18, boxHeight: 2 } };
+      make('ops-c4', { type: 'line', data: { labels, datasets: ds4 }, options: o4 });
+      const hrSel = HR.filter(filter);
+      $('ops-cap4').textContent = hrSel.length ? (team
+        ? `Team average ${f1(rate(hrSel, true))} orders per active hour; ${f1(rate(hrSel, false))} per person-hour across ${fmt(phOf(hrSel))} person-hours.`
+        : `${who}: ${f1(rate(hrSel, false))} orders per active hour over ${fmt(phOf(hrSel))} hours, against ${f1(rate(HR, false))} for all ${role}.`) : '';
+      const byU = new Map(); HR.forEach(r => { if (!byU.has(r.u)) byU.set(r.u, []); byU.get(r.u).push(r); });
+      const hu = [...byU.entries()].map(([u, rows]) => ({ u, o: ordersOf(rows), n: phOf(rows) }))
+        .filter(p => p.o >= MIN_ORDERS && (st.flag || !flagged || p.u !== FLAG.u)).sort((a, b) => b.o / b.n - a.o / a.n);
+      sizeTall('ops-w4u', hu.length);
+      make('ops-c4u', {
+        type: 'bar', data: { labels: hu.map(p => name(p.u)), datasets: [{ data: hu.map(p => +(p.o / p.n).toFixed(2)), backgroundColor: hu.map(p => uColor(p.u)), borderRadius: 3, barThickness: 16 }] },
+        options: base(T, { mode: 'nearest', intersect: true, callbacks: { label: c => { const p = hu[c.dataIndex]; return [` ${f1(p.o / p.n)} orders per active hour`, ` ${fmt(p.o)} orders over ${fmt(p.n)} hours`].concat(isFlag(p.u) ? [' Flagged: possible shared login'] : []); } } },
+          { indexAxis: 'y', scales: axes(T, { horizontal: true }) })
+      });
     }
 
+    function fillExcl() {
+      const list = $('ops-excl-list'), ros = ROSTER[st.mode];
+      const ids = [...new Set([...ros.keys(), ...st.excl])].sort((a, b) => (ros.get(b) || 0) - (ros.get(a) || 0));
+      list.innerHTML = ids.length ? ids.map(u => `<label class="ops-excl__item"><input type="checkbox" value="${u}"${st.excl.has(u) ? ' checked' : ''}> <span>${esc(name(u))}</span><span class="ops-excl__item-count">${fmt(ros.get(u) || 0)}</span></label>`).join('')
+        : '<p class="ops-excl__empty">No users in the selected dates.</p>';
+      $('ops-excl-sum').textContent = st.excl.size ? `Excluding ${st.excl.size} user${st.excl.size === 1 ? '' : 's'}` : 'Exclude users';
+    }
     function fillUsers() {
+      fillExcl();
       const sel = $('ops-user'), cur = sel.value || 'all';
       const label = $('ops-mode-label');
       sel.textContent = '';
@@ -1334,12 +1566,14 @@ ob_start();
     }
     function setRange() {
       const longDay = d => `${+d.slice(8, 10)} ${MONTHS_LONG[+d.slice(5, 7) - 1]} ${d.slice(0, 4)}`;
+      const what = st.mode === 'packer' ? 'packed orders' : 'completed orders';
       if (!ALL_DAYS.length) {
-        $('ops-range').textContent = range.from || range.to ? `No completed orders between ${longDay(range.from || DATA_MIN)} and ${longDay(range.to || TODAY)}.` : 'No completed orders found yet.';
+        $('ops-range').textContent = range.from || range.to ? `No ${what} between ${longDay(range.from || DATA_MIN)} and ${longDay(range.to || TODAY)}.` : `No ${what} found yet.`;
         return;
       }
       const a = ALL_DAYS[0], b = ALL_DAYS[ALL_DAYS.length - 1];
-      $('ops-range').textContent = `Orders completed at the pick stage from ${longDay(a)} to ${longDay(b)}. Times are Eastern.`;
+      const ex = [...st.excl].map(u => name(u)).join(', ');
+      $('ops-range').textContent = `Orders completed at the ${st.mode === 'packer' ? 'pack' : 'pick'} stage from ${longDay(a)} to ${longDay(b)}. Times are Eastern.` + (ex ? ` Excluding ${ex}.` : '');
     }
     function status(msg, kind) { const el = $('ops-status'); el.textContent = msg; el.dataset.kind = kind || ''; }
 
@@ -1370,16 +1604,32 @@ ob_start();
       st.u = 'all';
       const btn = $('ops-mode-toggle');
       btn.textContent = st.mode === 'packer' ? 'Switch to Picker' : 'Switch to Packer';
-      fillUsers();
+      derive(); fillUsers(); setRange();
       render();
     });
-    document.querySelectorAll('.ops-seg button').forEach(b => b.addEventListener('click', () => {
-      st.p = b.dataset.p;
-      document.querySelectorAll('.ops-seg button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    document.querySelectorAll('#ops-metric button').forEach(b => b.addEventListener('click', () => {
+      st.metric = b.dataset.m;
+      document.querySelectorAll('#ops-metric button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
       render();
     }));
-    $('ops-flag').addEventListener('change', e => { st.flag = e.target.checked; render(); });
+    document.querySelectorAll('#ops-period button').forEach(b => b.addEventListener('click', () => {
+      st.p = b.dataset.p;
+      document.querySelectorAll('#ops-period button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+      render();
+    }));
+    $('ops-sku').addEventListener('change', e => { st.sku = e.target.value; derive(); fillUsers(); setRange(); render(); });
+    const refresh = () => { derive(); fillUsers(); setRange(); render(); };
+    $('ops-excl-list').addEventListener('change', e => {
+      const u = +e.target.value; if (!u) return;
+      if (e.target.checked) st.excl.add(u); else st.excl.delete(u);
+      saveExcl(); refresh();
+    });
+    $('ops-excl-clear').addEventListener('click', () => { st.excl.clear(); saveExcl(); refresh(); });
+    document.addEventListener('click', e => { const d = $('ops-excl'); if (d.open && !d.contains(e.target)) d.open = false; });
+    $('ops-flag').addEventListener('change', e => { st.flag = e.target.checked; derive(); fillUsers(); setRange(); render(); });
     $('ops-refresh').addEventListener('click', load);
+    $('ops-defs-open').addEventListener('click', () => $('ops-defs').showModal());
+    $('ops-defs').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); }); // click outside closes
     $('ops-preset').addEventListener('change', e => applyPreset(e.target.value));
     $('ops-from').addEventListener('change', onDateInput);
     $('ops-to').addEventListener('change', onDateInput);

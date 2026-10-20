@@ -76,9 +76,7 @@ function asset_url(string $path, string $base): string
 ?>
 
 
-
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -112,10 +110,21 @@ function asset_url(string $path, string $base): string
       lastActivity: <?= (int) $session_last_activity ?>,
       expiresAt: <?= (int) $session_expires_at ?>,
       serverNow: <?= (int) $session_server_now ?>,
-      loginUrl: <?= json_encode('login.php') ?>
+      loginUrl: <?= json_encode('login.php') ?>,
+      keepaliveUrl: <?= json_encode(rtrim($BASE_URL, '/') . '/utils/session_keepalive.php') ?>
     };
   </script>
 
+  <style>
+    .badge-content {
+      cursor: pointer;
+      transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+    .badge-content.is-collapsed {
+      transform: translateX(calc(100% - 18px));
+    }
+  </style>
   <link rel="stylesheet" href="<?= asset_url('/refactor_css/site.css', $BASE_URL) ?>" />
   <link rel="stylesheet" href="<?= asset_url('/refactor_css/dashboard.css', $BASE_URL) ?>" />
   <link rel="stylesheet" href="<?= asset_url('/refactor_css/welcome.css', $BASE_URL) ?>" />
@@ -156,24 +165,23 @@ function asset_url(string $path, string $base): string
   <!-- Feature Discovery Modal -->
   <div id="featureDiscoveryOverlay" class="fd-overlay">
     <div class="fd-card">
-      <h2 class="fd-title">March 2026 Updates</h2>
+      <h2 class="fd-title">October 2026 Updates</h2>
       <div class="fd-scroll-area">
 
         <section class="fd-section">
-          <h3>New: Inspection App</h3>
+          <h3>Order Operations</h3>
           <ul class="fd-list">
-            <li><strong>Digital Checklists:</strong> Streamlined inspection workflows.</li>
-            <li><strong>Zone Heat Map:</strong> Visual tracking of high-priority/hazard zones.</li>
-            <li><strong>Accident Advisories:</strong> Create and log incident reports instantly.</li>
+            <li><strong>Exclude Users:</strong> Filter any picker or packer out of every total, average, and chart from the operations dashboard.</li>
+            <li><strong>SKU Filter:</strong> Narrow charts and KPIs to single-SKU or multi-SKU orders only.</li>
+            <li><strong>Per-Active-Hour Rates:</strong> Charts now show orders per clock hour where work actually happened.</li>
           </ul>
         </section>
 
         <section class="fd-section">
-          <h3>Inventory & Logistics</h3>
+          <h3>Session & Security</h3>
           <ul class="fd-list">
-            <li><strong>Excel Integration:</strong> Download pick orders (xlsx) directly to the app.</li>
-            <li><strong>Scan & Verify:</strong> Improved accuracy with mobile scanning on pick orders.</li>
-            <li><strong>Lot Management:</strong> Full control to create, edit, or remove product lots.</li>
+            <li><strong>Session Keepalive:</strong> Session timer now resets on activity — no more surprise logouts while working.</li>
+            <li><strong>Collapsible Badge:</strong> Click the session badge to tuck it away; it remembers your preference.</li>
           </ul>
         </section>
 
@@ -182,7 +190,7 @@ function asset_url(string $path, string $base): string
           <ul class="fd-list">
             <li><strong>Redesigned Dash:</strong> A cleaner, faster overview of your warehouse.</li>
             <li><strong>Enhanced Tables:</strong> Optimized layouts for better readability.</li>
-            <li><strong>Security:</strong> Updated session timeout for better data protection.</li>
+            <li><strong>Lot Management:</strong> Full control to create, edit, or remove product lots.</li>
           </ul>
         </section>
 
@@ -347,7 +355,7 @@ function asset_url(string $path, string $base): string
       const featureOverlay = document.getElementById("featureDiscoveryOverlay");
       const ackButton = document.getElementById("acknowledgeFeaturesBtn");
 
-      const FEATURE_VERSION = "release_2026_01_20";
+      const FEATURE_VERSION = "release_2026_10_20";
 
       const hasSeenUpdate = localStorage.getItem(FEATURE_VERSION);
 
@@ -375,7 +383,18 @@ function asset_url(string $path, string $base): string
         return;
       }
 
-      const serverOffset = (Date.now() / 1000) - session.serverNow;
+      let serverOffset = (Date.now() / 1000) - session.serverNow;
+
+      window.InvApp.onSessionPayload = function (payload) {
+        if (!payload || payload.ok === false) return;
+        if (typeof payload.serverNow === 'number') {
+          session.serverNow = payload.serverNow;
+          serverOffset = (Date.now() / 1000) - session.serverNow;
+        }
+        if (typeof payload.expiresAt === 'number') {
+          session.expiresAt = payload.expiresAt;
+        }
+      };
 
       function formatRemaining(totalSeconds) {
         const safeSeconds = Math.max(0, Math.floor(totalSeconds));
@@ -399,6 +418,77 @@ function asset_url(string $path, string $base): string
 
       updateCountdown();
       window.setInterval(updateCountdown, 1000);
+
+      const content = badge.querySelector('.badge-content');
+      if (content) {
+        const BADGE_KEY = 'invapp:badge-collapsed';
+        if (localStorage.getItem(BADGE_KEY) === '1') content.classList.add('is-collapsed');
+        content.addEventListener('click', () => {
+          content.classList.toggle('is-collapsed');
+          localStorage.setItem(BADGE_KEY, content.classList.contains('is-collapsed') ? '1' : '0');
+        });
+      }
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const session = window.InvApp && window.InvApp.session ? window.InvApp.session : null;
+
+      if (!session || !session.keepaliveUrl) return;
+
+      const minPingIntervalMs = 30000;
+      let lastPingAt = 0;
+      let pingInFlight = false;
+
+      function applySessionPayload(payload) {
+        if (!payload || payload.ok === false) return;
+        if (typeof payload.lastActivity === 'number') session.lastActivity = payload.lastActivity;
+        if (typeof payload.serverNow === 'number') session.serverNow = payload.serverNow;
+        if (typeof payload.expiresAt === 'number') session.expiresAt = payload.expiresAt;
+        if (window.InvApp && typeof window.InvApp.onSessionPayload === 'function') {
+          window.InvApp.onSessionPayload(payload);
+        }
+      }
+
+      async function pingSession() {
+        const now = Date.now();
+        if (pingInFlight || (now - lastPingAt) < minPingIntervalMs) return;
+
+        pingInFlight = true;
+        lastPingAt = now;
+
+        try {
+          const response = await fetch(session.keepaliveUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ reason: 'user-interaction' })
+          });
+          if (response.ok) {
+            const payload = await response.json().catch(() => null);
+            applySessionPayload(payload);
+          }
+        } catch (_) {
+        } finally {
+          pingInFlight = false;
+        }
+      }
+
+      window.InvApp.touchSession = () => pingSession();
+
+      function onUserActivity() {
+        if (document.visibilityState === 'hidden') return;
+        void pingSession();
+      }
+
+      ['pointerdown', 'keydown', 'click', 'input', 'change', 'touchstart', 'wheel', 'focusin'].forEach(evt => {
+        window.addEventListener(evt, onUserActivity, { capture: true, passive: true });
+      });
+
+      window.setInterval(function () {
+        if (document.visibilityState !== 'hidden') void pingSession();
+      }, 60000);
     })();
   </script>
 
