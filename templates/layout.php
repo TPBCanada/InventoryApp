@@ -141,6 +141,8 @@ function asset_url(string $path, string $base): string
     <div class="dev-portal-badge" data-session-badge>
       <div class="badge-content">
 
+        <span class="badge-collapse-icon" aria-hidden="true">›</span>
+
         <?php if ($isDevPortal): ?>
           <span class="badge-dot"></span>
           <span class="badge-text">Dev Portal Active</span>
