@@ -1,0 +1,38 @@
+name: Deploy to Bluehost
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p 2222 xse.rqh.mybluehost.me >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -az --no-perms \
+            -e "ssh -i ~/.ssh/deploy_key -p 2222" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.vscode/' \
+            --exclude='vendor/' \
+            --exclude='.env.local' \
+            --exclude='dbinv.php' \
+            --exclude='dbusers.php' \
+            --exclude='config_init.php' \
+            --exclude='*/config_init.php' \
+            --exclude='sftp.json' \
+            --exclude='*.bak_*' \
+            --exclude='error.log' \
+            --exclude='error_log' \
+            ./ xserqhmy@xse.rqh.mybluehost.me:/home2/xserqhmy/public_html/dev/
