@@ -13,7 +13,7 @@ if (!isset($_SESSION['username'])) {
 
 $role_id = (int) ($_SESSION['role_id'] ?? 0);
 
-// Users whose role_id is in this list are left out of every Order operations figure (data is kept, just not shown).
+// Users whose role_id is in this list are labelled "(inactive)" everywhere their name appears.
 // TODO: set to the role_id(s) used for inactive users in xserqhmy_users.users.
 $OPS_INACTIVE_ROLE_IDS = [];
 
@@ -211,7 +211,19 @@ if ($action === 'order_ops_data') {
         TIME_TO_SEC(DATE_ADD(MAX(created_at), INTERVAL {$shift} HOUR)) AS t1
       FROM pick_verify_events WHERE workflow_stage = '{$stage}' AND user_id IS NOT NULL
       GROUP BY dy, u ORDER BY dy, u"), 1);
-    $pick_work = $work('pick');
+    // Pick view: units and working hours come only from successful pick scans, credited to the user who scanned.
+    // Closing an order (order_ready_to_pack), short-ship toggles and errors don't count, so a packer who closes
+    // a picker's order isn't credited with its units. Picker-days under OPS_MIN_SCAN_SECS are left out so a few
+    // seconds of scanning can't produce an extreme rate.
+    $OPS_MIN_SCAN_SECS = 900;
+    $pick_work = $ints($ops_query("SELECT DATE_FORMAT(DATE_ADD(created_at, INTERVAL {$shift} HOUR), '%Y-%m-%d') AS dy,
+        user_id AS u, TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) AS secs,
+        TIME_TO_SEC(DATE_ADD(MIN(created_at), INTERVAL {$shift} HOUR)) AS t0,
+        TIME_TO_SEC(DATE_ADD(MAX(created_at), INTERVAL {$shift} HOUR)) AS t1,
+        IFNULL(SUM(qty_delta), 0) AS q
+      FROM pick_verify_events
+      WHERE workflow_stage = 'pick' AND event_type = 'scan_success' AND user_id IS NOT NULL
+      GROUP BY dy, u HAVING secs >= {$OPS_MIN_SCAN_SECS} ORDER BY dy, u"), 1);
     $pack_work = $work('pack');
 
     $asof = $ops_query("SELECT DATE_FORMAT(DATE_ADD(NOW(), INTERVAL {$shift} HOUR), '%Y-%m-%d %H:%i')")[0][0] ?? '';
@@ -239,7 +251,7 @@ if ($action === 'order_ops_data') {
     }
   }
 
-  // Inactive users (by role), left out of every figure on the Order operations tab
+  // Inactive users (by role) — included in all figures but labelled "(inactive)" client-side
   $inactive = [];
   $inactive_roles = array_values(array_filter(array_map('intval', $OPS_INACTIVE_ROLE_IDS)));
   if ($all_ids && $inactive_roles) {
@@ -259,7 +271,7 @@ if ($action === 'order_ops_data') {
     'pack_days' => $pack_days,  // [date, user_id, orders, small, medium, large, sku_lines, units, single_sku]
     'pack_hours' => $pack_hours,  // [date, hour, user_id, orders, small, medium, large, sku_lines, units, single_sku]
     'pick_secs' => $pick_secs,  // [date, user_id, single_sku, seconds, orders_timed]
-    'pick_work' => $pick_work,  // [date, user_id, seconds first to last pick scan, first scan, last scan (secs after midnight)]
+    'pick_work' => $pick_work,  // [date, user_id, seconds first to last successful pick scan, first scan, last scan (secs after midnight), scanned units (qty_delta)]
     'pack_work' => $pack_work,  // [date, user_id, seconds first to last pack scan, first scan, last scan (secs after midnight)]
     'names' => $names,
     'inactive' => $inactive,  // user ids with an inactive role; removed client-side from all data
@@ -939,15 +951,17 @@ ob_start();
           <dt>Orders completed</dt>
           <dd>Orders whose pick was marked ready to pack.</dd>
           <dt>Units picked</dt>
-          <dd>Verified quantity on those orders.</dd>
+          <dd>Quantity on successful pick scans (<code>scan_success</code>, <code>qty_delta</code>), credited to the person who
+            scanned. Closing an order doesn't count as picking it. Units per order still uses verified quantity.</dd>
           <dt>Picker working-hours</dt>
-          <dd>For each picker each day, the time from their first pick scan to their last, added up across everyone. It includes breaks.</dd>
+          <dd>For each picker each day, the time from their first successful pick scan to their last, added up across
+            everyone. It includes breaks. Days with under 15 minutes of scanning are left out.</dd>
           <dt>Team hours on the floor</dt>
           <dd>For each day, the time from the first pick scan by anyone to the last pick scan by anyone, added up across days.
             The team rate divides by these hours, so it shows what the whole team produced per hour of operation.</dd>
         </dl>
-        <p class="ops-defs__note">Orders and units per working hour divide by these working hours. In Packer view the same
-          rules use pack scans. Working hours can't be split by order type, so with the Orders filter set they still
+        <p class="ops-defs__note">Orders and units per working hour divide by these working hours. In Packer view, units
+          are verified quantity on packed orders and working hours use all pack scans. Working hours can't be split by order type, so with the Orders filter set they still
           cover all orders.</p>
         <form method="dialog"><button class="btn btn--ghost" id="ops-defs-close">Close</button></form>
         </div>
@@ -1046,6 +1060,10 @@ ob_start();
       <p>Every chart and total follows the selected dates, including hour of day. Months and quarters marked with an
         asterisk are only partly inside the selected dates. Per-picker averages only include pickers with at least 10
         orders. Server times are shifted two hours from Mountain to Eastern.</p>
+      <p>In Picker view, units per working hour comes from successful pick scans only: each scan's <code>qty_delta</code>
+        is credited to the user who scanned it, and working hours run from that user's first to last successful pick
+        scan of the day. Days with under 15 minutes of scanning are left out, and the per-person chart fades anyone with
+        fewer than 2 working hours and leaves them out of the average and the highest figure.</p>
       <p>Users ticked under Exclude users are removed from every figure on the page, including team totals, averages and
         the shared-login check. The selection is remembered in this browser.</p>
       <p>Orders per active hour counts only clock hours in which a person completed at least one order, so time spent on
@@ -1081,12 +1099,13 @@ ob_start();
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const MIN_ORDERS = 10;
+    const MIN_SCAN_HOURS = 2; // Picker view, units per working hour: people with fewer scanning hours are faded and left out of the average
     const st = { metric: 'uph', p: 'day', u: 'all', flag: false, mode: 'picker', sku: 'all', excl: new Set() };
     try { (JSON.parse(localStorage.getItem('opsExcludedUsers') || '[]') || []).forEach(u => st.excl.add(+u)); } catch (e) { }
     const saveExcl = () => { try { localStorage.setItem('opsExcludedUsers', JSON.stringify([...st.excl])); } catch (e) { } };
     let ROSTER = { picker: new Map(), packer: new Map() }; // user id -> orders in the selected dates, before exclusions
     const charts = {};
-    let D = [], H = [], PACK_D = [], PACK_H = [], PICK = {}, NAMES = {}, ALL_DAYS = [], PERIOD_DAYS = {}, PU = [], PAC = [], FLAG = null;
+    let D = [], H = [], PACK_D = [], PACK_H = [], PICK = {}, NAMES = {}, INACTIVE = new Set(), ALL_DAYS = [], PERIOD_DAYS = {}, PU = [], PAC = [], FLAG = null;
     let W = [], PACK_W = [], RAW_W = [], RAW_PACK_W = [];
     let RAW_D = [], RAW_H = [], RAW_PACK_D = [], RAW_PACK_H = [], RAW_PS = [], DATA_MIN = '', DATA_MAX = '', TODAY = '';
     const range = { from: '', to: '' }; // '' = open-ended
@@ -1100,7 +1119,7 @@ ob_start();
       if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) n = parts[0];
       return n.replace(/\b([A-Z])([A-Z]+)\b/g, (m, a, b) => a + b.toLowerCase());
     };
-    const name = u => (NAMES[u] ? tidy(NAMES[u]) : 'User') + ' (#' + u + ')';
+    const name = u => (NAMES[u] ? tidy(NAMES[u]) : 'User') + ' (#' + u + ')' + (INACTIVE.has(u) ? ' (inactive)' : '');
     const z = () => ({ o: 0, s: 0, m: 0, l: 0, k: 0, q: 0 });
     const add = (a, r) => { a.o += r.o; a.s += r.s; a.m += r.m; a.l += r.l; a.k += r.k; a.q += r.q; return a; };
     const sized = a => a.s + a.m + a.l;
@@ -1128,17 +1147,10 @@ ob_start();
       RAW_PACK_D = (json.pack_days || []).map(a => Object.assign(row(a, 1), { d: a[0] }));
       RAW_PACK_H = (json.pack_hours || []).map(a => Object.assign(row(a, 2), { d: a[0], h: +a[1] }));
       RAW_PS = (json.pick_secs || []).map(a => ({ d: a[0], u: +a[1], one: +a[2] === 1, secs: +a[3], n: +a[4] }));
-      const wRow = a => ({ d: a[0], u: +a[1], secs: +a[2], t0: +a[3], t1: +a[4] });
+      const wRow = a => ({ d: a[0], u: +a[1], secs: +a[2], t0: +a[3], t1: +a[4], q: +(a[5] || 0) });
       RAW_W = (json.pick_work || []).map(wRow); RAW_PACK_W = (json.pack_work || []).map(wRow);
       NAMES = json.names || {};
-      // Users with an inactive role are removed from all data, so they never appear in totals, charts or the exclude list
-      const off = new Set((json.inactive || []).map(Number));
-      if (off.size) {
-        const on = r => !off.has(r.u);
-        RAW_D = RAW_D.filter(on); RAW_H = RAW_H.filter(on); RAW_PACK_D = RAW_PACK_D.filter(on); RAW_PACK_H = RAW_PACK_H.filter(on);
-        RAW_PS = RAW_PS.filter(on); RAW_W = RAW_W.filter(on); RAW_PACK_W = RAW_PACK_W.filter(on);
-        off.forEach(u => st.excl.delete(u));
-      }
+      INACTIVE = new Set((json.inactive || []).map(Number));
       const days = [...new Set(RAW_D.map(r => r.d))].sort();
       DATA_MIN = days[0] || ''; DATA_MAX = days[days.length - 1] || '';
       TODAY = (json.asof || '').slice(0, 10) || DATA_MAX;
@@ -1322,13 +1334,14 @@ ob_start();
     // ----- render -----
     // Working hours per person, and the team's hours on the floor (first scan by anyone to last scan by anyone, per day)
     function workHours(rows) {
-      const byU = new Map(), day = new Map();
+      const byU = new Map(), byQ = new Map(), day = new Map();
       rows.forEach(r => {
         byU.set(r.u, (byU.get(r.u) || 0) + r.secs / 3600);
+        byQ.set(r.u, (byQ.get(r.u) || 0) + (r.q || 0));
         const d = day.get(r.d) || { a: r.t0, b: r.t1 }; d.a = Math.min(d.a, r.t0); d.b = Math.max(d.b, r.t1); day.set(r.d, d);
       });
       let floor = 0; day.forEach(d => { floor += Math.max(0, d.b - d.a) / 3600; });
-      return { byU, person: [...byU.values()].reduce((a, h) => a + h, 0), floor };
+      return { byU, byQ, q: [...byQ.values()].reduce((a, n) => a + n, 0), person: [...byU.values()].reduce((a, h) => a + h, 0), floor };
     }
     function kpis() {
       const rows = DAYS().filter(inUser), t = rows.reduce(add, z()), days = daysFor(st.u), n = sized(t);
@@ -1341,7 +1354,8 @@ ob_start();
         : () => `over ${f1(hrs)} working hours.${mix}`;
       const card = ([v, l, m]) => `<div class="reports-summary-card"><div class="reports-summary-card__label">${esc(l)}</div><div class="reports-summary-card__value">${esc(v)}</div><div class="reports-summary-card__meta">${esc(m)}</div></div>`;
       $('ops-kpis').innerHTML = [
-        [f1(per(t.q)), `Units ${verb} per hour`, hrTxt(t.q)],
+        // Picker view: scanned units (pick scan_success qty) over the same scan-based hours. Packer view: verified qty on packed orders.
+        [f1(per(st.mode === 'packer' ? t.q : wh.q)), `Units ${verb} per hour`, hrTxt(st.mode === 'packer' ? t.q : wh.q)],
         [f1(per(t.o)), 'Orders completed per hour', hrTxt(t.o)],
         [f1(t.k / n), 'SKU lines per order', 'average'],
         [f1(t.q / n), 'Units per order', 'average, verified qty']
@@ -1421,21 +1435,30 @@ ob_start();
       const uColor = u => isFlag(u) ? T.flag : (st.u === 'all' || hi(u)) ? T.accent : T.soft;
       // 0. Production by person: one measure at a time, with a dashed team-average line
       {
+        // Picker view + units per hour: everyone with successful pick scans, credited with the units they scanned,
+        // whether or not they closed the order. Other measures still use completed orders.
+        const scanMode = st.mode === 'picker' && st.metric === 'uph';
         const wh = workHours(WORK()), M = {
-          uph: { lab: `Units ${st.mode === 'packer' ? 'packed' : 'picked'} per working hour`, v: p => p.h ? p.q / p.h : null, all: t => t.h ? t.q / t.h : null },
+          uph: { lab: `Units ${st.mode === 'packer' ? 'packed' : 'picked'} per working hour`, v: p => p.h ? p.uq / p.h : null, all: t => t.h ? t.uq / t.h : null },
           oph: { lab: 'Orders completed per working hour', v: p => p.h ? p.o / p.h : null, all: t => t.h ? t.o / t.h : null },
           lpo: { lab: 'SKU lines per order', v: p => sized(p) ? p.k / sized(p) : null, all: t => sized(t) ? t.k / sized(t) : null },
           upo: { lab: 'Units per order', v: p => sized(p) ? p.q / sized(p) : null, all: t => sized(t) ? t.q / sized(t) : null }
         }[st.metric];
-        const ppl = userList.filter(p => p.o > 0).map(p => Object.assign({}, p, { h: wh.byU.get(p.u) || 0 }))
+        const byOrders = new Map(userList.map(p => [p.u, p]));
+        const pool = scanMode
+          ? [...wh.byU.keys()].filter(u => !(flagged && !st.flag && u === FLAG.u)).map(u => Object.assign(z(), byOrders.get(u) || {}, { u }))
+          : userList.filter(p => p.o > 0);
+        const ppl = pool.map(p => Object.assign({}, p, { h: wh.byU.get(p.u) || 0, uq: scanMode ? (wh.byQ.get(p.u) || 0) : p.q }))
           .map(p => Object.assign(p, { val: M.v(p) })).filter(p => p.val != null).sort((a, b) => b.val - a.val);
-        // People under MIN_ORDERS are shown faded and kept out of the average, so a few orders can't skew it
-        const few = p => p.o < MIN_ORDERS, base0 = ppl.some(p => !few(p)) ? ppl.filter(p => !few(p)) : ppl;
-        const tot = base0.reduce((a, p) => { add(a, p); a.h += p.h; return a; }, Object.assign(z(), { h: 0 })), avg = M.all(tot);
+        // People under the threshold are shown faded and kept out of the average and the "highest" callout
+        const few = p => scanMode ? p.h < MIN_SCAN_HOURS : p.o < MIN_ORDERS, base0 = ppl.some(p => !few(p)) ? ppl.filter(p => !few(p)) : ppl;
+        const tot = base0.reduce((a, p) => { add(a, p); a.h += p.h; a.uq += p.uq; return a; }, Object.assign(z(), { h: 0, uq: 0 })), avg = M.all(tot);
         const nFew = ppl.filter(few).length;
+        const minTxt = scanMode ? `${MIN_SCAN_HOURS}+ working hours` : `${MIN_ORDERS}+ orders`;
+        const fewTxt = scanMode ? `fewer than ${MIN_SCAN_HOURS} working hours` : `fewer than ${MIN_ORDERS} orders`;
         $('ops-t0').innerHTML = `${esc(M.lab)} <span>dashed line: average of everyone shown</span>`;
         $('ops-cap0').textContent = ppl.length
-          ? `${ppl.length} ${role} completed orders. Average ${f1(avg)}${nFew && base0 !== ppl ? ` (${role} with ${MIN_ORDERS}+ orders)` : ''}; highest ${name(ppl[0].u)} at ${f1(ppl[0].val)}.` + (nFew ? ` Faded bars: fewer than ${MIN_ORDERS} orders, so less reliable.` : '') + (st.sku !== 'all' && st.metric.endsWith('ph') ? ' Working hours cover all order types.' : '')
+          ? `${ppl.length} ${role} ${scanMode ? 'scanned units' : 'completed orders'}. Average ${f1(avg)}${nFew && base0 !== ppl ? ` (${role} with ${minTxt})` : ''}; highest ${name(base0[0].u)} at ${f1(base0[0].val)}.` + (nFew ? ` Faded bars: ${fewTxt}, so less reliable.` : '') + (st.sku !== 'all' && st.metric.endsWith('ph') ? (scanMode ? ' Scanned units and working hours cover all order types.' : ' Working hours cover all order types.') : '')
           : `No ${role} completed orders in the selected dates.`;
         const avgLine = {
           id: 'avgLine', afterDatasetsDraw(c) {
@@ -1451,7 +1474,7 @@ ob_start();
         make('ops-c0u', {
           type: 'bar', plugins: [avgLine],
           data: { labels: ppl.map(p => name(p.u)), datasets: [{ data: ppl.map(p => +p.val.toFixed(2)), backgroundColor: ppl.map(p => few(p) ? T.soft : uColor(p.u)), borderRadius: 3, barThickness: 16 }] },
-          options: base(T, { mode: 'nearest', intersect: true, callbacks: { label: c => { const p = ppl[c.dataIndex]; return [` ${M.lab}: ${f1(p.val)}`, ` ${fmt(p.o)} orders, ${fmt(p.q)} units, ${fmt(p.k)} SKU lines`, ` ${f1(p.h)} working hours`].concat(few(p) ? [` Few orders (under ${MIN_ORDERS}): not in the average`] : []).concat(isFlag(p.u) ? [' Flagged: possible shared login'] : []); } } },
+          options: base(T, { mode: 'nearest', intersect: true, callbacks: { label: c => { const p = ppl[c.dataIndex]; return [` ${M.lab}: ${f1(p.val)}`, scanMode ? ` ${fmt(p.uq)} units scanned, ${fmt(p.o)} orders closed` : ` ${fmt(p.o)} orders, ${fmt(p.q)} units, ${fmt(p.k)} SKU lines`, ` ${f1(p.h)} working hours`].concat(few(p) ? [scanMode ? ` Few working hours (under ${MIN_SCAN_HOURS}): not in the average` : ` Few orders (under ${MIN_ORDERS}): not in the average`] : []).concat(isFlag(p.u) ? [' Flagged: possible shared login'] : []); } } },
             { indexAxis: 'y', layout: { padding: { top: 14 } }, scales: axes(T, { horizontal: true }) })
         });
       }
