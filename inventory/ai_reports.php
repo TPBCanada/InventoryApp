@@ -278,7 +278,6 @@ if ($action === 'reset') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'manual_sql') {
-  app_require_csrf();
   $preset_key = trim((string) ($_POST['preset_key'] ?? ''));
   $manual_sql = trim((string) ($_POST['manual_sql'] ?? ''));
   $current_label = '';
@@ -359,18 +358,17 @@ ob_start();
   <h2 class="title">Inventory Reports</h2>
 
   <div class="reports-page-tabs" role="tablist" aria-label="Report type">
-    <button type="button" class="reports-page-tab is-active" role="tab" aria-selected="true" data-tab="sql">SQL
-      reports</button>
-    <button type="button" class="reports-page-tab" role="tab" aria-selected="false" data-tab="ops">Order
+    <button type="button" class="reports-page-tab is-active" role="tab" aria-selected="true" data-tab="ops">Order
       operations</button>
+    <button type="button" class="reports-page-tab" role="tab" aria-selected="false" data-tab="sql">SQL
+      reports</button>
   </div>
 
-  <div id="tab-sql" class="reports-tab-panel">
+  <div id="tab-sql" class="reports-tab-panel" hidden>
 
     <div class="card card--pad reports-card">
       <form id="reports-form" class="form reports-form" method="post" action="">
         <input type="hidden" name="action" value="manual_sql" />
-        <input type="hidden" name="csrf_token" value="<?= h(app_csrf_token()) ?>" />
         <input type="hidden" name="preset_key" id="preset-key" value="" />
         <label for="manual-sql" style="display:block; color:var(--text-muted);">Direct SQL (SELECT/WITH only)</label>
         <textarea id="manual-sql" name="manual_sql" rows="5" class="input" style="width:100%; font-family:ui-monospace;"
@@ -866,7 +864,7 @@ ob_start();
     <?php endif; ?>
   </div><!-- /tab-sql -->
 
-  <div id="tab-ops" class="reports-tab-panel" hidden>
+  <div id="tab-ops" class="reports-tab-panel">
     <div class="card card--pad reports-card ops-card">
       <div class="ops-head">
         <div>
@@ -1073,7 +1071,7 @@ ob_start();
         t.setAttribute('aria-selected', on ? 'true' : 'false');
       });
       Object.keys(panels).forEach(k => { if (panels[k]) panels[k].hidden = k !== name; });
-      if (push) history.replaceState(null, '', name === 'ops' ? '#order-ops' : location.pathname + location.search);
+      if (push) history.replaceState(null, '', name === 'sql' ? '#sql-reports' : location.pathname + location.search);
       if (name === 'ops' && !opsStarted) { opsStarted = true; load(); }
       else if (name === 'ops') render();
     }
@@ -1642,7 +1640,8 @@ ob_start();
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     (mq.addEventListener ? mq.addEventListener('change', render) : mq.addListener(render));
 
-    if (location.hash === '#order-ops') showTab('ops', false);
+    if (location.hash === '#sql-reports') showTab('sql', false);
+    else { opsStarted = true; load(); }
   })();
 </script>
 
