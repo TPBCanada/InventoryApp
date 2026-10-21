@@ -173,6 +173,7 @@ function asset_url(string $path, string $base): string
         <section class="fd-section">
           <h3>Order Operations</h3>
           <ul class="fd-list">
+            <li><strong>Default View:</strong> Order Operations now loads first when you open Inventory Reports.</li>
             <li><strong>Exclude Users:</strong> Filter any picker or packer out of every total, average, and chart from the operations dashboard.</li>
             <li><strong>SKU Filter:</strong> Narrow charts and KPIs to single-SKU or multi-SKU orders only.</li>
             <li><strong>Per-Active-Hour Rates:</strong> Charts now show orders per clock hour where work actually happened.</li>
