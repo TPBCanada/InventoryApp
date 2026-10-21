@@ -934,7 +934,10 @@ ob_start();
           <div class="ops-excl__panel">
             <p class="ops-excl__hint">Ticked users are left out of every total, average and chart.</p>
             <div id="ops-excl-list"></div>
-            <button type="button" class="btn btn--ghost ops-excl__clear" id="ops-excl-clear">Clear all</button>
+            <div class="ops-excl__actions">
+              <button type="button" class="btn btn--ghost ops-excl__clear" id="ops-excl-clear">Clear all</button>
+              <button type="button" class="btn btn--ghost ops-excl__inactive" id="ops-excl-inactive" hidden>Hide inactive</button>
+            </div>
           </div>
         </details>
       </div>
@@ -1569,6 +1572,11 @@ ob_start();
       list.innerHTML = ids.length ? ids.map(u => `<label class="ops-excl__item"><input type="checkbox" value="${u}"${st.excl.has(u) ? ' checked' : ''}> <span>${esc(name(u))}</span><span class="ops-excl__item-count">${fmt(ros.get(u) || 0)}</span></label>`).join('')
         : '<p class="ops-excl__empty">No users in the selected dates.</p>';
       $('ops-excl-sum').textContent = st.excl.size ? `Excluding ${st.excl.size} user${st.excl.size === 1 ? '' : 's'}` : 'Exclude users';
+      const inactiveBtn = $('ops-excl-inactive');
+      const visibleInactive = [...INACTIVE].filter(u => ROSTER[st.mode].has(u));
+      inactiveBtn.hidden = visibleInactive.length === 0;
+      const allHidden = visibleInactive.every(u => st.excl.has(u));
+      inactiveBtn.textContent = allHidden ? 'Show inactive' : 'Hide inactive';
     }
     function fillUsers() {
       fillExcl();
@@ -1648,6 +1656,12 @@ ob_start();
       saveExcl(); refresh();
     });
     $('ops-excl-clear').addEventListener('click', () => { st.excl.clear(); saveExcl(); refresh(); });
+    $('ops-excl-inactive').addEventListener('click', () => {
+      const visibleInactive = [...INACTIVE].filter(u => ROSTER[st.mode].has(u));
+      const allHidden = visibleInactive.every(u => st.excl.has(u));
+      visibleInactive.forEach(u => allHidden ? st.excl.delete(u) : st.excl.add(u));
+      saveExcl(); refresh();
+    });
     document.addEventListener('click', e => { const d = $('ops-excl'); if (d.open && !d.contains(e.target)) d.open = false; });
     $('ops-flag').addEventListener('change', e => { st.flag = e.target.checked; derive(); fillUsers(); setRange(); render(); });
     $('ops-refresh').addEventListener('click', load);

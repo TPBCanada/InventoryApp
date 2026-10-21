@@ -630,8 +630,15 @@
   font-size: 0.85rem;
 }
 
-.reports-page .ops-excl__clear {
+.reports-page .ops-excl__actions {
+  display: flex;
+  gap: 6px;
   margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.reports-page .ops-excl__clear,
+.reports-page .ops-excl__inactive {
   padding: 4px 8px;
   font-size: 0.85rem;
 }
