@@ -274,7 +274,7 @@ if ($action === 'order_ops_data') {
     'pick_work' => $pick_work,  // [date, user_id, seconds first to last successful pick scan, first scan, last scan (secs after midnight), scanned units (qty_delta)]
     'pack_work' => $pack_work,  // [date, user_id, seconds first to last pack scan, first scan, last scan (secs after midnight)]
     'names' => $names,
-    'inactive' => $inactive,  // user ids with an inactive role; removed client-side from all data
+    'inactive' => $inactive,  // user ids with an inactive role; labelled "(inactive)" and hideable with the Hide inactive toggle
   ]);
   exit;
 }
@@ -936,7 +936,7 @@ ob_start();
             <div id="ops-excl-list"></div>
             <div class="ops-excl__actions">
               <button type="button" class="btn btn--ghost ops-excl__clear" id="ops-excl-clear">Clear all</button>
-              <button type="button" class="btn btn--ghost ops-excl__inactive" id="ops-excl-inactive" hidden>Hide inactive</button>
+              <button type="button" class="btn btn--ghost ops-excl__inactive" id="ops-excl-inactive" aria-pressed="false">Hide inactive</button>
             </div>
           </div>
         </details>
@@ -1569,14 +1569,17 @@ ob_start();
     function fillExcl() {
       const list = $('ops-excl-list'), ros = ROSTER[st.mode];
       const ids = [...new Set([...ros.keys(), ...st.excl])].sort((a, b) => (ros.get(b) || 0) - (ros.get(a) || 0));
-      list.innerHTML = ids.length ? ids.map(u => `<label class="ops-excl__item"><input type="checkbox" value="${u}"${st.excl.has(u) ? ' checked' : ''}> <span>${esc(name(u))}</span><span class="ops-excl__item-count">${fmt(ros.get(u) || 0)}</span></label>`).join('')
+      list.innerHTML = ids.length ? ids.map(u => `<label class="ops-excl__item"><input type="checkbox" value="${u}"${st.excl.has(u) ? ' checked' : ''}><span>${esc(name(u))}</span></label>`).join('')
         : '<p class="ops-excl__empty">No users in the selected dates.</p>';
       $('ops-excl-sum').textContent = st.excl.size ? `Excluding ${st.excl.size} user${st.excl.size === 1 ? '' : 's'}` : 'Exclude users';
       const inactiveBtn = $('ops-excl-inactive');
       const visibleInactive = [...INACTIVE].filter(u => ROSTER[st.mode].has(u));
-      inactiveBtn.hidden = visibleInactive.length === 0;
-      const allHidden = visibleInactive.every(u => st.excl.has(u));
+      // Always shown; disabled when nobody in this roster has an inactive role ($OPS_INACTIVE_ROLE_IDS)
+      inactiveBtn.disabled = visibleInactive.length === 0;
+      inactiveBtn.title = visibleInactive.length ? `${visibleInactive.length} inactive user${visibleInactive.length === 1 ? '' : 's'} in this list` : 'No inactive users in this list';
+      const allHidden = visibleInactive.length > 0 && visibleInactive.every(u => st.excl.has(u));
       inactiveBtn.textContent = allHidden ? 'Show inactive' : 'Hide inactive';
+      inactiveBtn.setAttribute('aria-pressed', allHidden ? 'true' : 'false');
     }
     function fillUsers() {
       fillExcl();
@@ -1658,6 +1661,7 @@ ob_start();
     $('ops-excl-clear').addEventListener('click', () => { st.excl.clear(); saveExcl(); refresh(); });
     $('ops-excl-inactive').addEventListener('click', () => {
       const visibleInactive = [...INACTIVE].filter(u => ROSTER[st.mode].has(u));
+      if (!visibleInactive.length) return;
       const allHidden = visibleInactive.every(u => st.excl.has(u));
       visibleInactive.forEach(u => allHidden ? st.excl.delete(u) : st.excl.add(u));
       saveExcl(); refresh();
